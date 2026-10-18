@@ -1,0 +1,1 @@
+write_bd_tcl -force C:/path/to/repo/hw/vivado/bd/anc_bd.tcl
