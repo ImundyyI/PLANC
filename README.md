@@ -57,3 +57,13 @@ above commands assume you are on Linux. I think you might just be able to replac
 ## VSCode Support
 
 You can use VSCode instead of Vivado if you use the VHDL LS extension by Henrik Bohlin. I have setup a `vhdl_ls.toml` file to configure the language server. This includes syntax highlighting, intellisense etc.
+
+## CocoTB
+
+Feel free to use cocotb, which allows you to run testbenches on .vhd files using python. I am not sure how to set it up on Windows, however on Linux, follow these commands:
+
+1. Install required packages `sudo apt install ghdl-llvm make build-essential python3-venv`
+2. Locate root cocotb directory ` cd hw/tests/cocotb `
+3. Install python venv ` python3 -m venv .venv `
+4. Activate python venv ` source .venv/bin/activate `
+5. Install python packages ` pip install -r requirements.txt `
