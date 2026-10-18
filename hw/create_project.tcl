@@ -10,6 +10,8 @@ proc find_files {dir pattern} {
     return $found
 }
 
+catch {close_project -quiet}
+
 create_project anc $proj_dir -part xck26-sfvc784-2LV-c -force
 set_property board_part xilinx.com:kv260_som:part0:1.4 [current_project]
 
