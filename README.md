@@ -3,6 +3,21 @@
 
 Use Vivado 2024.1.
 
+The project structure is depicted below.
+
+├── bd
+│   └── bd.tcl
+├── create_project.tcl
+├── modules
+│   ├── demo.vhd
+│   └── simple.vhd
+├── tests
+│   ├── cocotb
+│   └── vivado_tb
+└── vivado
+    └── kria-constraints-1.xdc
+
+
 
 ## First Time Setup
 1. clone repo. Ensure the repo is not nestedly deeply inside a directory hierarchy, **Vivado on windows complains if your path is too long**. Chuck it in like `C:\Desktop` or sum idk.
@@ -39,3 +54,6 @@ If scripts via `source` or `write_bd_tcl` arent working, check you are CD'ed int
 
 above commands assume you are on Linux. I think you might just be able to replace the pathnames with `C:\folder\bruh\etc\` for example.
 
+## VSCode Support
+
+You can use VSCode instead of Vivado if you use the VHDL LS extension by Henrik Bohlin. I have setup a `vhdl_ls.toml` file to configure the language server. This includes syntax highlighting, intellisense etc.

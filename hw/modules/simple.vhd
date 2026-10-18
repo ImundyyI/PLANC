@@ -18,7 +18,6 @@ begin
             led <= val;
         end if;
     end process simple_ff;
-    
 end simple;
 
 
