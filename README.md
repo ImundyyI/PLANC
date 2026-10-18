@@ -16,7 +16,7 @@ Use Vivado 2024.1.
 ## After Pulling Changes
 
 | What changed | What to do | Why? |
-|---|---|
+|---|---| --- |
 | Edited `.vhd` or `.xdc` files | reload hierachy, rerun synth/impl if needed | vivado alr knows about its existence so its fine |
 | Added, removed or renamed `.vhd` files | `source hw/update_sources.tcl` | Vivado doesnt automatically see new files in hw/modules/. cleaner to just rebuild |
 | `bd.tcl`, constraints, block diagram, or scripts changed | `source hw/create_project.tcl` |
@@ -26,7 +26,7 @@ Use Vivado 2024.1.
 The block diagram layout may change if you recreate the project, just run `Regenerate Layout` on the open diagram for consistency.
 ## Rules
 
-- Hand written source code for module files and/or IP goes in hw/modules/. Don't create files inside Vivado's project folders, since Vivado is referencing the files in these folders, which are outside its project hierarchy.
+- Hand written source code for module files and/or IP goes in hw/modules/. Don't create files inside Vivado's project folders, since Vivado is referencing the files in these folders, which are outside its project hierarchy. For this reason, never run `Copy files to local project directory` or whatever because changes to it wont be reflected hw/modules/ etc.
 - After changing the block design, export it by running `write_bd_tcl -force hw/bd/bd.tcl`, and commit those files.
 - Commit `anc.bit` and `anc.hwh` into `sw/overlays/` only for useful builds.
 
