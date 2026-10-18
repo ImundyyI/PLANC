@@ -16,7 +16,7 @@ create_project anc $proj_dir -part xck26-sfvc784-2LV-c -force
 set_property board_part xilinx.com:kv260_som:part0:1.4 [current_project]
 
 add_files [find_files [file join $hw_dir modules] *.vhd]
-set_property file_type {VHDL 2008} [get_files -filter {FILE_TYPE == VHDL}]
+set_property file_type {VHDL} [get_files -filter {FILE_TYPE == VHDL}]
 add_files -fileset constrs_1 [find_files [file join $hw_dir vivado] *.xdc]
 
 set vtb [find_files [file join $hw_dir tests vivado_tb] *.vhd]
