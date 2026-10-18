@@ -1,0 +1,12 @@
+#!/bin/sh
+files=$(git diff --name-only --diff-filter=ADR ORIG_HEAD HEAD -- hw/modules hw/tests/vivado_tb)
+bd=$(git diff --name-only ORIG_HEAD HEAD -- hw/bd hw/create_project.tcl hw/vivado)
+
+if [ -n "$files" ] || [ -n "$bd" ]; then
+  echo ""
+  echo "=== VIVADO PROJECT WILL BE OUT OF DATE ==="
+  [ -n "$files" ] && echo "Files added, removed or renamed:" && echo "$files"
+  [ -n "$bd" ] && echo "Block design, constraints or script changed:" && echo "$bd"
+  echo "Close Vivado and re-run create_project.tcl pls"
+  echo ""
+fi
