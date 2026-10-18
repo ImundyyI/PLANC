@@ -8,10 +8,22 @@ hs_err_pid*
 vivado*.backup.*
 
 #cocotb
+# this is dumb but it basically stops output files
+# with the same name as the .py file from being committed.
+hw/tests/cocotb/**/*
+!hw/tests/cocotb/**/*.*
+!hw/tests/cocotb/**/*/
+!Makefile
+
 hw/tests/cocotb/sim_build/
 results.xml
 *.ghw
 *.vcd
+*.o
+*.cf
+e~*
+
+
 
 # python
 __pycache__/
