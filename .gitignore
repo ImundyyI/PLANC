@@ -1,0 +1,20 @@
+# Ignore vivado stuff
+hw/build/
+.Xil/
+*.jou
+*.log
+*.str
+hs_err_pid*
+vivado*.backup.*
+
+#cocotb
+hw/tests/cocotb/sim_build/
+results.xml
+*.ghw
+*.vcd
+
+# python
+__pycache__/
+*.pyc
+*ipynb_checkpoints/
+
