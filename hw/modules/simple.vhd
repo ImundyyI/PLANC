@@ -10,7 +10,7 @@ entity simple is
 end simple;
 
 
-architecture simple of simple is
+architecture Behavioural of simple is
 begin
     simple_ff: process(clk)
     begin
@@ -18,7 +18,7 @@ begin
             led <= val;
         end if;
     end process simple_ff;
-end simple;
+end Behavioural;
 
 
 
