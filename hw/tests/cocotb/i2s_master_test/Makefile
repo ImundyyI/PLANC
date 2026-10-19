@@ -13,3 +13,4 @@ EXTRA_ARGS += --std=08
 SIM_ARGS += --vcd=$(CURDIR)/wave.vcd
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
+
