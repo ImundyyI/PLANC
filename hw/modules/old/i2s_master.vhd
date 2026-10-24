@@ -27,6 +27,9 @@ entity i2s_master is
         fifo_w_stb      : out std_logic;    -- Write strobe: 1 = ready to write, 0 = busy
         fifo_full       : in  std_logic     -- 1 = not full, 0 = full
     );
+
+
+    
 end i2s_master;
 
 architecture Behavioral of i2s_master is
@@ -40,11 +43,10 @@ architecture Behavioral of i2s_master is
     signal bclk_fall    : std_logic;
     signal bit_count    : unsigned(4 downto 0) := (Others => '0');
     signal push_to_f    : std_logic := '0';
-    signal shift_data   : std_logic_vector(23 downto 0) := shift_default;
+    signal shift_data   : std_logic_vector(23 downto 0) := shift_default;   
     
     
 begin
-
     -----------------------------------------------------------------------
     -- hint: write code for bclk clock generator:
     -----------------------------------------------------------------------

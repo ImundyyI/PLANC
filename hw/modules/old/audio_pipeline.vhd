@@ -339,9 +339,8 @@ begin
         if (rst = '0') then
             v_cnt := 0;
         elsif rising_edge(clk) then
-            if ((sig_axis_tvalid and axis_tready) = '1') then
+            if ((sig_fifo_rd) = '1') then
                 v_cnt := v_cnt + 1;
-                
                 if (v_cnt = 256) then
                     axis_tlast <= '1';
                     v_cnt := 0;
