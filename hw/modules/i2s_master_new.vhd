@@ -21,7 +21,8 @@ entity i2s_master_new is
         err_w_stb   : out std_logic;
 
         i2s_bclk    : out std_logic;
-        i2s_lrcl    : out std_logic
+        i2s_lrcl    : out std_logic;
+        i2s_count  : out std_logic_vector(4 downto 0)
     );
 end entity;
 
@@ -36,8 +37,8 @@ architecture Behavioral of i2s_master_new is
     signal bclk_rise        : std_logic;
     signal bclk_fall        : std_logic;
     signal bit_count        : unsigned(4 downto 0) := (Others => '0');
-    signal ref_push         : std_logic;
-    signal err_push         : std_logic;
+    signal ref_push         : std_logic := '0';
+    signal err_push         : std_logic := '0';
 
     constant shift_default  : t_i2s_sample := (Others => '0');
     signal ref_data         : t_i2s_sample := shift_default;   
@@ -88,8 +89,11 @@ begin
                 ref_data <= ref_data(22 downto 0) & ref_dout;
                 err_data <= err_data(22 downto 0) & err_dout;
                 if (bit_count = 23) then
-                    err_push <= '1';
-                    ref_push <= '1';
+                    if (ws = '0') then
+                        err_push <= '1';
+                    else
+                        ref_push <= '1';
+                    end if;
 
                 elsif (bit_count = 31) then
                     ref_data <= shift_default;
@@ -105,5 +109,6 @@ begin
 
     err_din <= (DATA_WIDTH - 1 downto 24 => err_data(23)) & err_data;
     ref_din <= (DATA_WIDTH - 1 downto 24 => ref_data(23)) & ref_data;
+    i2s_count <= std_logic_vector(bit_count);
 end Behavioral;
 
