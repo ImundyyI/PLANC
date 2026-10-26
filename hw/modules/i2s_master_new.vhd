@@ -9,7 +9,7 @@ use work.constants.all;
 entity i2s_master_new is
     port (
         clk         : in std_logic;
-
+        debug       : in std_logic;
         ref_full    : in std_logic;
         err_full    : in std_logic;
 
@@ -43,6 +43,9 @@ architecture Behavioral of i2s_master_new is
     constant shift_default  : t_i2s_sample := (Others => '0');
     signal shift_data       : t_i2s_sample := shift_default;
     signal shift_data_xtend : t_fifo_word;
+
+    -- runs a counter that mimics a ramp signal.
+    signal debug_cnt : unsigned(DATA_WIDTH - 1 downto 0) := (Others => '0');
 
 begin
     i2s_bclk <= bclk;
@@ -103,13 +106,21 @@ begin
         end if;
     end process;
 
+    COUNTER : process (clk) 
+    begin
+        if (rising_edge(clk)) then
+            if (err_push = '1' or ref_push = '1') then 
+                debug_cnt <= debug_cnt + 1; 
+            end if; 
+        end if;
+    end process;
     -- activate write strobe if the FIFOs are not full AND we have a valid sample.
     err_w_stb <= err_push and not err_full;
     ref_w_stb <= ref_push and not ref_full;
     
     shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => shift_data(23)) & shift_data;
-    err_din <= shift_data_xtend;
-    ref_din <= shift_data_xtend;
+    err_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
+    ref_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
     i2s_count <= std_logic_vector(bit_count);
 end Behavioral;
 
