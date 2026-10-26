@@ -92,6 +92,13 @@ begin
                 shift_data <= shift_data(22 downto 0) & i2s_dout;
 --                ref_data <= ref_data(22 downto 0) & i2s_dout;
 --                err_data <= err_data(22 downto 0) & i2s_dout;
+                -- have to latch on 24th bit count bcuz the final
+                -- sign extended state happens on the rising edge producing
+                -- the 23rd. if we did that on the 23rd it would see the old value.
+
+                -- TODO. CHANGE TO OLD CODE AND VERIFY IT WORKS. THIS LATCHING 
+                -- IS LESS EFFICIENT THAN PRODUCING THE OUTPUTS COMBINATIONALLY,
+                -- BUT IT IS EASIER TO DEBUG.
                 if (bit_count = 24) then
                     if (ws = '0') then
                         err_push <= '1';
