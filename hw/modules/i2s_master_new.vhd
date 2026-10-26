@@ -95,8 +95,20 @@ begin
                 if (bit_count = 23) then
                     if (ws = '0') then
                         err_push <= '1';
+                        if (debug = '1') then
+                            err_din <= std_logic_vector(debug_cnt);
+                        else
+                            err_din <= shift_data_xtend;
+
+
+                        end if;
                     else
                         ref_push <= '1';
+                        if (debug = '1') then
+                            ref_din <= std_logic_vector(debug_cnt);
+                        else
+                            ref_din <= shift_data_xtend;
+                        end if;
                     end if;
 
                 elsif (bit_count = 31) then
@@ -119,8 +131,8 @@ begin
     ref_w_stb <= ref_push and not ref_full;
     
     shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => shift_data(23)) & shift_data;
-    err_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
-    ref_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
+--    err_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
+--    ref_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
     i2s_count <= std_logic_vector(bit_count);
 end Behavioral;
 
