@@ -141,8 +141,6 @@ xilinx.com:ip:zynq_ultra_ps_e:3.5\
 xilinx.com:ip:axi_dma:7.1\
 xilinx.com:ip:smartconnect:1.0\
 xilinx.com:ip:proc_sys_reset:5.0\
-xilinx.com:ip:xlconstant:1.1\
-xilinx.com:ip:ila:6.2\
 "
 
    set list_ips_missing ""
@@ -692,24 +690,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Create instance: rst_ps8_0_99M, and set properties
   set rst_ps8_0_99M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps8_0_99M ]
 
-  # Create instance: xlconstant_0, and set properties
-  set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
-  set_property CONFIG.CONST_VAL {0} $xlconstant_0
-
-
-  # Create instance: ila_0, and set properties
-  set ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_0 ]
-  set_property -dict [list \
-    CONFIG.C_DATA_DEPTH {8192} \
-    CONFIG.C_MONITOR_TYPE {Native} \
-    CONFIG.C_NUM_OF_PROBES {9} \
-    CONFIG.C_PROBE0_WIDTH {32} \
-    CONFIG.C_PROBE1_WIDTH {32} \
-    CONFIG.C_PROBE2_WIDTH {1} \
-    CONFIG.C_PROBE7_WIDTH {5} \
-  ] $ila_0
-
-
   # Create interface connections
   connect_bd_intf_net -intf_net audio_pipeline_new_0_axis [get_bd_intf_pins audio_pipeline_new_0/axis] [get_bd_intf_pins axi_dma_1/S_AXIS_S2MM]
   connect_bd_intf_net -intf_net audio_pipeline_new_1_axis [get_bd_intf_pins audio_pipeline_new_1/axis] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
@@ -721,19 +701,17 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM1_FPD [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM1_FPD] [get_bd_intf_pins smartconnect_0/S01_AXI]
 
   # Create port connections
-  connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins audio_pipeline_new_0/fifo_full] [get_bd_pins ila_0/probe3] [get_bd_pins i2s_master_new_0/ref_full]
-  connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins audio_pipeline_new_1/fifo_full] [get_bd_pins ila_0/probe2] [get_bd_pins i2s_master_new_0/err_full]
-  connect_bd_net -net i2s_master_new_0_err_din [get_bd_pins i2s_master_new_0/err_din] [get_bd_pins audio_pipeline_new_1/fifo_din] [get_bd_pins ila_0/probe0]
-  connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins i2s_master_new_0/err_w_stb] [get_bd_pins audio_pipeline_new_1/fifo_wr] [get_bd_pins ila_0/probe4]
-  connect_bd_net -net i2s_master_new_0_i2s_bclk [get_bd_pins i2s_master_new_0/i2s_bclk] [get_bd_ports pmod_i2s_bclk] [get_bd_pins ila_0/probe6]
-  connect_bd_net -net i2s_master_new_0_i2s_count [get_bd_pins i2s_master_new_0/i2s_count] [get_bd_pins ila_0/probe8]
-  connect_bd_net -net i2s_master_new_0_i2s_lrcl [get_bd_pins i2s_master_new_0/i2s_lrcl] [get_bd_ports pmod_i2s_lrclk] [get_bd_pins ila_0/probe7]
-  connect_bd_net -net i2s_master_new_0_ref_din [get_bd_pins i2s_master_new_0/ref_din] [get_bd_pins audio_pipeline_new_0/fifo_din] [get_bd_pins ila_0/probe1]
-  connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins i2s_master_new_0/ref_w_stb] [get_bd_pins audio_pipeline_new_0/fifo_wr] [get_bd_pins ila_0/probe5]
-  connect_bd_net -net pmod_i2s_dout_1 [get_bd_ports pmod_i2s_dout] [get_bd_pins i2s_master_new_0/err_dout]
+  connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins audio_pipeline_new_0/fifo_full] [get_bd_pins i2s_master_new_0/ref_full]
+  connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins audio_pipeline_new_1/fifo_full] [get_bd_pins i2s_master_new_0/err_full]
+  connect_bd_net -net i2s_master_new_0_err_din [get_bd_pins i2s_master_new_0/err_din] [get_bd_pins audio_pipeline_new_1/fifo_din]
+  connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins i2s_master_new_0/err_w_stb] [get_bd_pins audio_pipeline_new_1/fifo_wr]
+  connect_bd_net -net i2s_master_new_0_i2s_bclk [get_bd_pins i2s_master_new_0/i2s_bclk] [get_bd_ports pmod_i2s_bclk]
+  connect_bd_net -net i2s_master_new_0_i2s_lrcl [get_bd_pins i2s_master_new_0/i2s_lrcl] [get_bd_ports pmod_i2s_lrclk]
+  connect_bd_net -net i2s_master_new_0_ref_din [get_bd_pins i2s_master_new_0/ref_din] [get_bd_pins audio_pipeline_new_0/fifo_din]
+  connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins i2s_master_new_0/ref_w_stb] [get_bd_pins audio_pipeline_new_0/fifo_wr]
+  connect_bd_net -net pmod_i2s_dout_1 [get_bd_ports pmod_i2s_dout] [get_bd_pins i2s_master_new_0/i2s_dout]
   connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_pins audio_pipeline_new_0/reset] [get_bd_pins audio_pipeline_new_1/reset] [get_bd_pins axi_dma_0/axi_resetn] [get_bd_pins axi_dma_1/axi_resetn]
-  connect_bd_net -net xlconstant_0_dout [get_bd_pins xlconstant_0/dout] [get_bd_pins i2s_master_new_0/ref_dout]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins audio_pipeline_new_0/clk] [get_bd_pins axi_dma_1/m_axi_s2mm_aclk] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins audio_pipeline_new_1/clk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins axi_dma_0/s_axi_lite_aclk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins axi_dma_1/s_axi_lite_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins ila_0/clk] [get_bd_pins i2s_master_new_0/clk]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins audio_pipeline_new_0/clk] [get_bd_pins axi_dma_1/m_axi_s2mm_aclk] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins audio_pipeline_new_1/clk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins axi_dma_0/s_axi_lite_aclk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins axi_dma_1/s_axi_lite_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins i2s_master_new_0/clk]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins rst_ps8_0_99M/ext_reset_in]
 
   # Create address segments

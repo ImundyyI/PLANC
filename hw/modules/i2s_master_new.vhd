@@ -12,14 +12,14 @@ entity i2s_master_new is
 
         ref_full    : in std_logic;
         err_full    : in std_logic;
-        ref_dout    : in std_logic;
-        err_dout    : in std_logic;
+
 
         ref_din     : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         ref_w_stb   : out std_logic;
         err_din     : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         err_w_stb   : out std_logic;
-
+        
+        i2s_dout    : in std_logic;
         i2s_bclk    : out std_logic;
         i2s_lrcl    : out std_logic;
         i2s_count  : out std_logic_vector(4 downto 0)
@@ -41,8 +41,8 @@ architecture Behavioral of i2s_master_new is
     signal err_push         : std_logic := '0';
 
     constant shift_default  : t_i2s_sample := (Others => '0');
-    signal ref_data         : t_i2s_sample := shift_default;   
-    signal err_data         : t_i2s_sample := shift_default;
+    signal shift_data       : t_i2s_sample := shift_default;
+    signal shift_data_xtend : t_fifo_word;
 
 begin
     i2s_bclk <= bclk;
@@ -86,8 +86,9 @@ begin
             -- sample both microphones on falling edge of bclk.
             if (bclk_fall = '1') then
                 bit_count <= bit_count + 1;
-                ref_data <= ref_data(22 downto 0) & ref_dout;
-                err_data <= err_data(22 downto 0) & err_dout;
+                shift_data <= shift_data(22 downto 0) & i2s_dout;
+--                ref_data <= ref_data(22 downto 0) & i2s_dout;
+--                err_data <= err_data(22 downto 0) & i2s_dout;
                 if (bit_count = 23) then
                     if (ws = '0') then
                         err_push <= '1';
@@ -96,8 +97,7 @@ begin
                     end if;
 
                 elsif (bit_count = 31) then
-                    ref_data <= shift_default;
-                    err_data <= shift_default;
+                    shift_data <= shift_default;
                 end if;  
             end if;
         end if;
@@ -106,9 +106,10 @@ begin
     -- activate write strobe if the FIFOs are not full AND we have a valid sample.
     err_w_stb <= err_push and not err_full;
     ref_w_stb <= ref_push and not ref_full;
-
-    err_din <= (DATA_WIDTH - 1 downto 24 => err_data(23)) & err_data;
-    ref_din <= (DATA_WIDTH - 1 downto 24 => ref_data(23)) & ref_data;
+    
+    shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => shift_data(23)) & shift_data;
+    err_din <= shift_data_xtend;
+    ref_din <= shift_data_xtend;
     i2s_count <= std_logic_vector(bit_count);
 end Behavioral;
 
