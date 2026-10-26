@@ -63,7 +63,7 @@ begin
     DES_INST : i2s_master_new
     port map (
         clk         => clk,
-        debug       => '1',
+        debug       => '0',
         ref_full    => sig_ref_full,
         err_full    => sig_err_full,
         ref_din     => sig_ref_din,
