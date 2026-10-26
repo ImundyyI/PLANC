@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity fifo is
     generic (
         DATA_WIDTH : positive := 32;
-        FIFO_DEPTH : positive := 5
+        FIFO_DEPTH : positive := 12
     );
     port (
         clkw    : in  std_logic; -- asynchronous FIFO.

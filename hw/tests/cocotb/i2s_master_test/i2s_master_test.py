@@ -3,7 +3,6 @@ from cocotb.clock import Clock;
 from cocotb.triggers import ClockCycles, FallingEdge, Timer, RisingEdge, ValueChange;
 from cocotb.utils import get_sim_time
 
-
 async def check_ws(dut):
     arr = [int("ffffffff", 16), int("11111111", 16), int("44444444", 16), int("22222222", 16)]
     index = 0
