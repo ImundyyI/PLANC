@@ -3,10 +3,13 @@ from cocotb.triggers import ClockCycles, RisingEdge, FallingEdge
 from cocotb.clock import Clock
 
 async def log_dins(dut):
+    old = 0
     while True:
         await RisingEdge(dut.w_stb)
-        val = int(dut.din.value)
+        val = dut.din.value.to_signed() >> 6
+        #assert(val > old)
         cocotb.log.info(f"the sig value is {val}")
+        
 
 @cocotb.test()
 async def test(dut):
