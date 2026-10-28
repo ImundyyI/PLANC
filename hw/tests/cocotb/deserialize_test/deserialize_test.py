@@ -6,9 +6,16 @@ async def log_dins(dut):
     old = 0
     while True:
         await RisingEdge(dut.w_stb)
-        val = dut.din.value.to_signed() >> 6
-        #assert(val > old)
-        cocotb.log.info(f"the sig value is {val}")
+        # shouldn't be any 1's in the first 6 bits.
+        err_val = dut.err_din.value.to_signed()
+        ref_val = dut.ref_din.value.to_signed()
+        
+        assert(err_val & 0x2f == 0)
+        assert(err_val == ref_val)
+        err_val = err_val >> 6
+        ref_val = ref_val >> 6
+        # print values
+        cocotb.log.info(f"e: {err_val}, r: {ref_val}")
         
 
 @cocotb.test()
