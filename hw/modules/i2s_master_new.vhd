@@ -92,7 +92,7 @@ begin
                 shift_data <= shift_data(22 downto 0) & i2s_dout;
 --                ref_data <= ref_data(22 downto 0) & i2s_dout;
 --                err_data <= err_data(22 downto 0) & i2s_dout;
-                if (bit_count = 25) then
+                if (bit_count = 24) then
                     if (ws = '0') then
                         err_push <= '1';
                         if (debug = '1') then
