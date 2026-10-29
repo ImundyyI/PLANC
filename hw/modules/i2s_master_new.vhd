@@ -132,8 +132,8 @@ begin
         end if;
     end process;
     -- activate write strobe if the FIFOs are not full AND we have a valid sample.
-    err_w_stb <= err_push and not err_full;
-    ref_w_stb <= ref_push and not ref_full;
+    err_w_stb <= err_push;
+    ref_w_stb <= ref_push;
     
     -- shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => shift_data(23)) & shift_data;
     err_shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => err_shift_data(23)) & err_shift_data;
