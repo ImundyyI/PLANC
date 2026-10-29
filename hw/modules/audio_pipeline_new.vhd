@@ -57,7 +57,10 @@ architecture Behavioral of audio_pipeline_new is
 begin
     fifo_full <= sig_fifo_full;
     sig_fifo_din <= fifo_din;
-    sig_fifo_wr <= fifo_wr;
+    -- block writes if the fifo is full. the driver for fifo_wr does not check
+    -- if fifo is full or not because the din signal is needed for other things aswell,
+    -- so the fifo shouldn't block other system operations.
+    sig_fifo_wr <= fifo_wr and not sig_fifo_full;
 
     INST_FIFO : fifo generic map ( DATA_WIDTH => DATA_WIDTH, FIFO_DEPTH => 5) 
                         port map (
@@ -80,6 +83,7 @@ begin
     axis_tvalid <= sig_axis_tvalid;
     sig_axis_tready <= axis_tready;
 
+    -- count the beats until reset occurs.
     process (clk)
     begin
         if (rising_edge(clk)) then
@@ -95,6 +99,7 @@ begin
 
     end process;
 
+    -- let slave know that this the last beat.
     axis_tlast <= '1' when (sig_beat_count = 255) else '0';
 
 
