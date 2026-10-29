@@ -8,21 +8,22 @@ use work.constants.all;
 
 entity i2s_master_new is
     port (
-        clk         : in std_logic;
-        debug       : in std_logic;
-        ref_full    : in std_logic;
-        err_full    : in std_logic;
+        clk             : in std_logic;
+        debug           : in std_logic;
+        ref_full        : in std_logic;
+        err_full        : in std_logic;
 
 
-        ref_din     : out std_logic_vector(DATA_WIDTH - 1 downto 0);
-        ref_w_stb   : out std_logic;
-        err_din     : out std_logic_vector(DATA_WIDTH - 1 downto 0);
-        err_w_stb   : out std_logic;
+        ref_din         : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        ref_w_stb       : out std_logic;
+        err_din         : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        err_w_stb       : out std_logic;
         
-        i2s_dout    : in std_logic;
-        i2s_bclk    : out std_logic;
-        i2s_lrcl    : out std_logic;
-        i2s_count  : out std_logic_vector(4 downto 0)
+        i2s_ref_dout    : in std_logic;
+        i2s_err_dout    : in std_logic;
+        i2s_bclk        : out std_logic;
+        i2s_lrcl        : out std_logic;
+        i2s_count       : out std_logic_vector(4 downto 0)
     );
 end entity;
 
@@ -41,8 +42,11 @@ architecture Behavioral of i2s_master_new is
     signal err_push         : std_logic := '0';
 
     constant shift_default  : t_i2s_sample := (Others => '0');
-    signal shift_data       : t_i2s_sample := shift_default;
-    signal shift_data_xtend : t_fifo_word;
+    signal err_shift_data   : t_i2s_sample := shift_default;
+    signal ref_shift_data   : t_i2s_sample := shift_default;
+    signal err_shift_data_xtend : t_fifo_word;
+    signal ref_shift_data_xtend : t_fifo_word;
+
 
     -- runs a counter that mimics a ramp signal.
     signal debug_cnt : unsigned(DATA_WIDTH - 1 downto 0) := (Others => '0');
@@ -89,35 +93,36 @@ begin
             -- sample both microphones on falling edge of bclk.
             if (bclk_fall = '1') then
                 bit_count <= bit_count + 1;
-                shift_data <= shift_data(22 downto 0) & i2s_dout;
---                ref_data <= ref_data(22 downto 0) & i2s_dout;
---                err_data <= err_data(22 downto 0) & i2s_dout;
+                -- shift_data <= shift_data(22 downto 0) & i2s_dout;
+                err_shift_data <= err_shift_data(22 downto 0) & i2s_err_dout;
+                ref_shift_data <= ref_shift_data(22 downto 0) & i2s_ref_dout;
+
+                -- have to latch on 24th bit count bcuz the final
+                -- sign extended state happens on the rising edge producing
+                -- the 23rd. if we did that on the 23rd it would see the old value.
                 if (bit_count = 24) then
                     if (ws = '0') then
                         err_push <= '1';
+                        ref_push <= '1';
+                        -- TODO: remove when project is confifmed donep ls.
                         if (debug = '1') then
                             err_din <= std_logic_vector(debug_cnt);
-                        else
-                            err_din <= shift_data_xtend;
-
-
-                        end if;
-                    else
-                        ref_push <= '1';
-                        if (debug = '1') then
                             ref_din <= std_logic_vector(debug_cnt);
                         else
-                            ref_din <= shift_data_xtend;
+                            err_din <= err_shift_data_xtend;
+                            ref_din <= ref_shift_data_xtend;
                         end if;
                     end if;
-
+                -- when we get to the last BCLk, clear vector so
+                -- we cna shift the next samples bits in.
                 elsif (bit_count = 31) then
-                    shift_data <= shift_default;
+                    ref_shift_data <= shift_default;
+                    err_shift_data <= shift_default;
                 end if;  
             end if;
         end if;
     end process;
-
+    -- TODO: remove this. it is only useful for debugging stuf.
     COUNTER : process (clk) 
     begin
         if (rising_edge(clk)) then
@@ -127,10 +132,12 @@ begin
         end if;
     end process;
     -- activate write strobe if the FIFOs are not full AND we have a valid sample.
-    err_w_stb <= err_push and not err_full;
-    ref_w_stb <= ref_push and not ref_full;
+    err_w_stb <= err_push;
+    ref_w_stb <= ref_push;
     
-    shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => shift_data(23)) & shift_data;
+    -- shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => shift_data(23)) & shift_data;
+    err_shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => err_shift_data(23)) & err_shift_data;
+    ref_shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => ref_shift_data(23)) & ref_shift_data;
 --    err_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
 --    ref_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
     i2s_count <= std_logic_vector(bit_count);

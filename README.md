@@ -36,13 +36,22 @@ The project structure is depicted below.
 | `bd.tcl`, constraints, block diagram, or scripts changed | `source hw/create_project.tcl` | changes are exported to `bd.tcl`, which Vivado doesnt read by default. `create_project.tcl` reads this and forces Vivado to understand the new BD | 
 | Not sure | `source hw/create_project.tcl` | just cuz |
 
-
 The block diagram layout may change if you recreate the project, just run `Regenerate Layout` on the opened diagram for consistency.
+
+## After Making Changes
+If you have made changes to the block diagram on Vivado, you **must** use the `write_bd_tcl` TCL script outlined below, otherwise your changes **will not** be saved and may be overwritten if you run `create_project.tcl`.
+
 ## Rules
 
+
+
+
 - Hand written source code for module files and/or IP goes in `hw/modules/`. Don't create files inside Vivado's project folders, since Vivado is referencing the files in these folders, which are outside its project hierarchy. For this reason, never run `Copy files to local project directory` or whatever because changes to it wont be reflected `hw/modules/` etc.
-- After changing the block design, export it by running `write_bd_tcl -force hw/bd/bd.tcl`, and commit those files.
+
+- After changing the block design, export it by running `write_bd_tcl -force hw/bd/bd.tcl` in the Vivado TCL Console, and commit those files (make sure your tcl console is `cd`'d into the repo directory, sometimes it defaults to your /home and wont recognise the path specified)
 - Commit `anc.bit` and `anc.hwh` into `sw/overlays/` only for useful builds.
+
+
 
 ## Obtaining project files on Kria KV260
 
