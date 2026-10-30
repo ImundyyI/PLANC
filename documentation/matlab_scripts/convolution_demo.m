@@ -9,7 +9,7 @@ Fs = 8 * 10^3;
 
 % I just superpositioned 3 sins of different freq, and hten a random signal
 % to make it harder for the system.
-x = sin(F(1) / Fs * 2 * pi .* (1:L)) + sin(F(2) / Fs * 2 * pi .* (1:L)) + sin(F(3) / Fs * 2 * pi .* (1:L)) + rand(1, L) * 0.5;
+% x = sin(F(1) / Fs * 2 * pi .* (1:L)) + sin(F(2) / Fs * 2 * pi .* (1:L)) + sin(F(3) / Fs * 2 * pi .* (1:L)) + rand(1, L) * 0.5;
 x = sin(F(1) / Fs * 2 * pi .* (1:L)) + sin(F(2) / Fs * 2 * pi .* (1:L)) + sin(F(3) / Fs * 2 * pi .* (1:L)) + rand(1, L) * 0.5;
 t = 1:L;
 
