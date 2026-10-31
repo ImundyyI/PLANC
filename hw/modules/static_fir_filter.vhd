@@ -52,6 +52,16 @@ architecture Behavioral of static_fir_filter is
     signal busy : std_logic := '0';
     signal acc  : signed(47 downto 0) := (others => '0');
     
+    component mult_gen_0
+        port ( CLK : in std_logic;
+              A   : in std_logic_vector(17 downto 0);
+              B   : in std_logic_vector(17 downto 0);
+              P   : out std_logic_vector(35 downto 0) );
+    end component;
+    signal a_in, b_in : std_logic_vector(17 downto 0);
+    signal prod       : std_logic_vector(35 downto 0);
+    signal busy1, busy2, busy3 : std_logic := '0';
+    
     -- the SHAT below needs to be / 2^18 afterwards to get the actual value
     constant SHAT_SHIFT : integer := 18;
     type shat_rom_t is array (0 to 1023) of integer range -131072 to 131071; 
@@ -187,6 +197,12 @@ architecture Behavioral of static_fir_filter is
     );
 
 begin
+    a_in <= ref(18*k+17 downto 18*k);
+    b_in <= std_logic_vector(to_signed(SHAT_ROM(k), 18));
+    mult: mult_gen_0 port map (CLK => clk, 
+                           A => a_in, 
+                           B => b_in, 
+                           P => prod);
 process(clk)
         variable x   : signed(17 downto 0);
         variable sum : signed(47 downto 0);
@@ -198,15 +214,24 @@ process(clk)
                 acc  <= (others => '0');
                 busy <= '1';
             elsif busy = '1' then
-                x   := signed(ref(18*k+17 downto 18*k));           
-                sum := acc + to_signed(SHAT_ROM(k), 18) * x;        
-                acc <= sum;
                 if k = M-1 then
                     busy     <= '0';
-                    filtered <= std_logic_vector(sum(SHAT_SHIFT+17 downto SHAT_SHIFT));   
-                    done     <= '1';
                 else
                     k <= k + 1;
+                end if;
+            end if;
+            
+            busy1 <= busy;
+            busy2 <= busy1;
+            busy3 <= busy2;
+            
+            if busy3 = '1' then
+                sum := acc + signed(prod);
+                acc <= sum;
+                -- busy3 = 1 but busy2 = 0 means this is the last product
+                if busy2 = '0' then
+                    filtered <= std_logic_vector(sum(SHAT_SHIFT+17 downto SHAT_SHIFT));
+                    done     <= '1';
                 end if;
             end if;
         end if;
