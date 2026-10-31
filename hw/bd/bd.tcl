@@ -46,7 +46,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 # The design that will be created by this Tcl script contains the following 
 # module references:
-# audio_pipeline_new, i2s_master_new, audio_pipeline_new, sin_input, amp_i2s_tx
+# audio_pipeline_new, i2s_master_new, audio_pipeline_new, sin_input, amp_i2s_tx, leap_forward_LFSR, static_fir_filter
 
 # Please add the sources of those modules before sourcing this Tcl script.
 
@@ -173,6 +173,8 @@ i2s_master_new\
 audio_pipeline_new\
 sin_input\
 amp_i2s_tx\
+leap_forward_LFSR\
+static_fir_filter\
 "
 
    set list_mods_missing ""
@@ -261,6 +263,7 @@ proc create_root_design { parentCell } {
     CONFIG.PSU_MIO_11_DRIVE_STRENGTH {4} \
     CONFIG.PSU_MIO_11_SLEW {slow} \
     CONFIG.PSU_MIO_12_DRIVE_STRENGTH {4} \
+    CONFIG.PSU_MIO_12_INPUT_TYPE {cmos} \
     CONFIG.PSU_MIO_12_POLARITY {Default} \
     CONFIG.PSU_MIO_12_SLEW {slow} \
     CONFIG.PSU_MIO_13_DRIVE_STRENGTH {4} \
@@ -293,6 +296,7 @@ proc create_root_design { parentCell } {
     CONFIG.PSU_MIO_21_POLARITY {Default} \
     CONFIG.PSU_MIO_21_SLEW {slow} \
     CONFIG.PSU_MIO_22_DRIVE_STRENGTH {4} \
+    CONFIG.PSU_MIO_22_INPUT_TYPE {cmos} \
     CONFIG.PSU_MIO_22_POLARITY {Default} \
     CONFIG.PSU_MIO_22_SLEW {slow} \
     CONFIG.PSU_MIO_23_DRIVE_STRENGTH {4} \
@@ -369,6 +373,7 @@ proc create_root_design { parentCell } {
     CONFIG.PSU_MIO_50_POLARITY {Default} \
     CONFIG.PSU_MIO_50_SLEW {slow} \
     CONFIG.PSU_MIO_51_DRIVE_STRENGTH {4} \
+    CONFIG.PSU_MIO_51_INPUT_TYPE {cmos} \
     CONFIG.PSU_MIO_51_POLARITY {Default} \
     CONFIG.PSU_MIO_51_SLEW {slow} \
     CONFIG.PSU_MIO_54_DRIVE_STRENGTH {4} \
@@ -410,6 +415,7 @@ proc create_root_design { parentCell } {
     CONFIG.PSU_MIO_77_DRIVE_STRENGTH {4} \
     CONFIG.PSU_MIO_77_SLEW {slow} \
     CONFIG.PSU_MIO_7_DRIVE_STRENGTH {4} \
+    CONFIG.PSU_MIO_7_INPUT_TYPE {cmos} \
     CONFIG.PSU_MIO_7_POLARITY {Default} \
     CONFIG.PSU_MIO_7_SLEW {slow} \
     CONFIG.PSU_MIO_8_DRIVE_STRENGTH {4} \
@@ -738,6 +744,28 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Create instance: xlconstant_1, and set properties
   set xlconstant_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_1 ]
 
+  # Create instance: leap_forward_LFSR_0, and set properties
+  set block_name leap_forward_LFSR
+  set block_cell_name leap_forward_LFSR_0
+  if { [catch {set leap_forward_LFSR_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $leap_forward_LFSR_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: static_fir_filter_0, and set properties
+  set block_name static_fir_filter
+  set block_cell_name static_fir_filter_0
+  if { [catch {set static_fir_filter_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $static_fir_filter_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
   # Create interface connections
   connect_bd_intf_net -intf_net audio_pipeline_new_0_axis [get_bd_intf_pins audio_pipeline_new_0/axis] [get_bd_intf_pins axi_dma_1/S_AXIS_S2MM]
   connect_bd_intf_net -intf_net audio_pipeline_new_1_axis [get_bd_intf_pins audio_pipeline_new_1/axis] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
@@ -752,17 +780,19 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net amp_i2s_tx_0_amp_din [get_bd_pins amp_i2s_tx_0/amp_din] [get_bd_ports pmod_i2s2_dout]
   connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins audio_pipeline_new_0/fifo_full] [get_bd_pins i2s_master_new_0/ref_full]
   connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins audio_pipeline_new_1/fifo_full] [get_bd_pins i2s_master_new_0/err_full]
-  connect_bd_net -net i2s_master_new_0_err_din [get_bd_pins i2s_master_new_0/err_din] [get_bd_pins audio_pipeline_new_1/fifo_din] [get_bd_pins ila_0/probe3] [get_bd_pins amp_i2s_tx_0/din]
-  connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins i2s_master_new_0/err_w_stb] [get_bd_pins audio_pipeline_new_1/fifo_wr] [get_bd_pins ila_0/probe5]
-  connect_bd_net -net i2s_master_new_0_i2s_bclk [get_bd_pins i2s_master_new_0/i2s_bclk] [get_bd_pins ila_0/probe0] [get_bd_pins sin_input_0/bclk] [get_bd_pins amp_i2s_tx_0/i2s_bclk] [get_bd_ports pmod_i2s_bclk] [get_bd_ports pmod_i2s2_bclk]
-  connect_bd_net -net i2s_master_new_0_i2s_lrcl [get_bd_pins i2s_master_new_0/i2s_lrcl] [get_bd_pins ila_0/probe1] [get_bd_pins sin_input_0/lrcl] [get_bd_pins amp_i2s_tx_0/i2s_lrcl] [get_bd_ports pmod_i2s_lrclk] [get_bd_ports pmod_i2s2_lrclk]
+  connect_bd_net -net i2s_master_new_0_err_din [get_bd_pins i2s_master_new_0/err_din] [get_bd_pins ila_0/probe3] [get_bd_pins leap_forward_LFSR_0/err_din]
+  connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins i2s_master_new_0/err_w_stb] [get_bd_pins audio_pipeline_new_1/fifo_wr] [get_bd_pins ila_0/probe5] [get_bd_pins leap_forward_LFSR_0/step]
+  connect_bd_net -net i2s_master_new_0_i2s_bclk [get_bd_pins i2s_master_new_0/i2s_bclk] [get_bd_pins ila_0/probe0] [get_bd_pins sin_input_0/bclk] [get_bd_ports pmod_i2s_bclk] [get_bd_ports pmod_i2s2_bclk] [get_bd_pins amp_i2s_tx_0/i2s_bclk]
+  connect_bd_net -net i2s_master_new_0_i2s_lrcl [get_bd_pins i2s_master_new_0/i2s_lrcl] [get_bd_pins ila_0/probe1] [get_bd_pins sin_input_0/lrcl] [get_bd_ports pmod_i2s_lrclk] [get_bd_ports pmod_i2s2_lrclk] [get_bd_pins amp_i2s_tx_0/i2s_lrcl]
   connect_bd_net -net i2s_master_new_0_ref_din [get_bd_pins i2s_master_new_0/ref_din] [get_bd_pins audio_pipeline_new_0/fifo_din] [get_bd_pins ila_0/probe2]
   connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins i2s_master_new_0/ref_w_stb] [get_bd_pins audio_pipeline_new_0/fifo_wr] [get_bd_pins ila_0/probe4]
+  connect_bd_net -net leap_forward_LFSR_0_dout [get_bd_pins leap_forward_LFSR_0/dout] [get_bd_pins amp_i2s_tx_0/din]
+  connect_bd_net -net leap_forward_LFSR_0_fifo_word [get_bd_pins leap_forward_LFSR_0/fifo_word] [get_bd_pins audio_pipeline_new_1/fifo_din]
   connect_bd_net -net pmod_i2s_dout_1 [get_bd_ports pmod_i2s_dout] [get_bd_pins i2s_master_new_0/i2s_err_dout]
   connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_pins audio_pipeline_new_0/reset] [get_bd_pins audio_pipeline_new_1/reset] [get_bd_pins axi_dma_0/axi_resetn] [get_bd_pins axi_dma_1/axi_resetn]
   connect_bd_net -net xlconstant_0_dout [get_bd_pins xlconstant_0/dout] [get_bd_pins i2s_master_new_0/i2s_ref_dout] [get_bd_pins i2s_master_new_0/debug]
   connect_bd_net -net xlconstant_1_dout [get_bd_pins xlconstant_1/dout] [get_bd_pins amp_i2s_tx_0/din_stb]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins audio_pipeline_new_0/clk] [get_bd_pins axi_dma_1/m_axi_s2mm_aclk] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins audio_pipeline_new_1/clk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins axi_dma_0/s_axi_lite_aclk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins axi_dma_1/s_axi_lite_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins i2s_master_new_0/clk] [get_bd_pins ila_0/clk] [get_bd_pins amp_i2s_tx_0/clk]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins audio_pipeline_new_0/clk] [get_bd_pins axi_dma_1/m_axi_s2mm_aclk] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins audio_pipeline_new_1/clk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins axi_dma_0/s_axi_lite_aclk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins axi_dma_1/s_axi_lite_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins i2s_master_new_0/clk] [get_bd_pins ila_0/clk] [get_bd_pins amp_i2s_tx_0/clk] [get_bd_pins leap_forward_LFSR_0/clk]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins rst_ps8_0_99M/ext_reset_in]
 
   # Create address segments
@@ -783,7 +813,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -795,4 +824,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
 create_root_design ""
 
+
+common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
