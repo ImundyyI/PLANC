@@ -43,11 +43,13 @@ set_property SLEW SLOW   [get_ports pmod_bclk] ;
 #set_property SLEW SLOW [get_ports pmod_btn_sw1];
 
 #set_property SLEW SLOW [get_ports pmod_dummmy];
-set_property DRIVE 4   [get_ports pmod_lrcl] ;
+
+# will need higher drive for LRCL and BCLK cuz 3 channels read them.
+set_property DRIVE 8   [get_ports pmod_lrcl] ;
 set_property DRIVE 4   [get_ports pmod_ref_dout] ; 
 set_property DRIVE 4   [get_ports pmod_amp_din] ;
 set_property DRIVE 4   [get_ports pmod_err_dout] ;
-set_property DRIVE 4   [get_ports pmod_bclk] ;
+set_property DRIVE 8   [get_ports pmod_bclk] ;
 #set_property DRIVE 4 [get_ports pmod_i2s_lrclk];
 #set_property DRIVE 4 [get_ports pmod_led_d1];
 #set_property DRIVE 4 [get_ports pmod_btn_sw1];
