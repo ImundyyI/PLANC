@@ -9,7 +9,7 @@ package constants is
     constant PCM_PRECISION     : natural := 18;
     constant SAMPLE_WIDTH      : natural := 24;
 
-    constant M : integer := 512;
+    constant M : integer := 1024;
     constant M_BITS : integer := integer(ceil(log2(real(M))));
     constant L : integer := 32;
     constant L_BITS : integer := integer(ceil(log2(real(L))));

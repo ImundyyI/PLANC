@@ -16,7 +16,7 @@ entity x_history_buffer is
         reset   : in std_logic;
         en      : in std_logic;
         -- this needs to be updated to work with generics.
-        rd_ptr  : in unsigned(8 downto 0);
+        rd_ptr  : in unsigned(9 downto 0);
         ref_in  : in std_logic_vector(17 downto 0);
         ref_out : out std_logic_vector(17 downto 0)
     );
