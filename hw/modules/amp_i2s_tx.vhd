@@ -19,7 +19,9 @@ end amp_i2s_tx;
 
 architecture Behavioral of amp_i2s_tx is
     constant GAIN      : natural := 0;                   -- 0 = x1, 1 = x2, 2 = x4, 3 = x8
-    constant DC_OFFSET : integer := -830000;             -- DC: mic's resting value (from PYNQ)
+    
+--    constant DC_OFFSET : integer := -403000;           -- use if we playing directly from mic
+    constant DC_OFFSET : integer := 0;                   -- other wise nmo need
 
     signal sample   : std_logic_vector(31 downto 0) := (others => '0');
     signal tx_reg   : std_logic_vector(31 downto 0) := (others => '0');

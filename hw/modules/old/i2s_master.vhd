@@ -106,7 +106,7 @@ begin
             if (bclk_fall = '1') then
                 bit_count <= bit_count + 1;
                 shift_data <= shift_data(22 downto 0) & i2s_dout;   
-                if (bit_count = 23) then
+                if (bit_count = 24) then
                     push_to_f <= '1';
                 elsif (bit_count = 31) then
                     shift_data <= shift_default;
