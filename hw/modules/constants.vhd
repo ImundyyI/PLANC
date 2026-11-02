@@ -19,7 +19,6 @@ package constants is
     subtype t_axi_word   is std_logic_vector(DATA_WIDTH - 1 downto 0);
     subtype t_i2s_sample is std_logic_vector(SAMPLE_WIDTH - 1 downto 0);
 
-    type t_ref_history is array (0 to M - 1) of std_logic_vector(17 downto 0);
-    constant ref_default : t_ref_history := (Others => (Others => '0'));
+
 
 end package;

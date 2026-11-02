@@ -1,3 +1,4 @@
+-- maintains x[n], x[n - 1], ..., x[n - M - 1]. i.e the past M samples.
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -8,15 +9,16 @@ use work.constants.all;
 
 entity x_history_buffer is
     generic (
-        M : integer := M
+        -- THESE MUST BE CORRECT OTHERWISE THE MODULE WILL THROW AN ERROR.
+        M : integer := M;
+        M_BITS : integer := M_BITS
     );
 
     port (
         clk     : in std_logic;
         reset   : in std_logic;
         en      : in std_logic;
-        -- this needs to be updated to work with generics.
-        rd_ptr  : in unsigned(9 downto 0);
+        rd_ptr  : in unsigned(M_BITS - 1 downto 0);
         ref_in  : in std_logic_vector(17 downto 0);
         ref_out : out std_logic_vector(17 downto 0)
     );
@@ -24,7 +26,10 @@ end entity;
 
 
 architecture Behavioral of x_history_buffer is
+    type t_ref_history is array (0 to M - 1) of std_logic_vector(17 downto 0);
+    constant ref_default : t_ref_history := (Others => (Others => '0'));
     signal ref_history : t_ref_history := ref_default;
+
     constant NUM_BITS : integer := integer(ceil(log2(real(M))));
     -- start at maximum value.
     signal sig_wr_ptr : unsigned(NUM_BITS - 1 downto 0) := to_unsigned(M - 1, NUM_BITS);
@@ -33,7 +38,11 @@ architecture Behavioral of x_history_buffer is
     signal sig_index : unsigned(NUM_BITS - 1 downto 0);
     signal sig_ref_out : std_logic_vector(17 downto 0);
 begin
+    -- check that bit widths align and warn if we dont have enough entries in the history.
     assert 2**NUM_BITS = M report "M must be a power of 2, otherwise underflow mechanism will not work" severity FAILURE;
+    assert M_BITS = NUM_BITS report "M_BITS mismatch with actual width" severity FAILURE;
+    assert M > 1 report "M should be more than 1 entry" severity ERROR;
+
     sig_rd_ptr <= rd_ptr;
     ref_out <= sig_ref_out;
     -- this denotes the current delay element wanting to be accesssed based on hte index of the most recent value,

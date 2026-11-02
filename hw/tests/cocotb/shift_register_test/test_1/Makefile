@@ -1,7 +1,7 @@
 SIM ?= ghdl
 TOPLEVEL_LANG ?= vhdl
 
-MODULES := $(abspath $(CURDIR)/../../../modules)
+MODULES := $(abspath $(CURDIR)/../../../../modules)
 
 # Packages first, then the files that use them, GHDL doesn't sort for you
 VHDL_SOURCES += $(MODULES)/constants.vhd
