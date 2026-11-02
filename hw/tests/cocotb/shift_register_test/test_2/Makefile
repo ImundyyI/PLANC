@@ -17,3 +17,13 @@ SIM_ARGS += --wave=$(CURDIR)/wave.ghw
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
 
+.PHONY: custom_clean
+custom_clean:
+	rm -rf *.o
+	rm -rf *.vcd
+	rm -rf *.ghw
+	rm -rf *.xml
+	rm -rf __pycache__/
+	find . -maxdepth 1 -type f ! -name "*.*" ! -name "Makefile" ! -name "README*" -executable -delete
+	
+clean:: custom_clean
