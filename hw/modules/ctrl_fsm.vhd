@@ -21,10 +21,50 @@ end entity;
 architecture Behavioral of ctrl_fsm is
     -- this needs to shift register input, and gate speaker register for when convolution finishes.
     --it also needs to gate weight registers, and x' history registers in parallel.
-    type t_receive_state is (IDLE, STATIC_FIR, SPEAKER, WEIGHT_UPDATE);
-begin
-    -- weight updates should finish immediately.
+    type t_state is (IDLE, STATIC_FIR, SPEAKER, WEIGHT_UPDATE);
 
+    signal state        : t_state := IDLE;
+    signal state_next   : t_state;
+begin
+    -- always immediately load these values into the shift register AND standalone error sample register.
+    -- s.t we dont waste any cycles.
+    reg_en <= err_push or ref_push;
+
+    FSM_STATES : process (clk)
+    begin
+        case state is
+            when IDLE =>
+                if (err_push <= '1') then
+                    state_next <= STATIC_FIR;
+                else
+                    state_next <= IDLE;
+                end if;      
+            when STATIC_FIR =>
+                -- now that the shift register has the required values.
+            when SPEAKER =>
+
+            when WEIGHT_UPDATE =>
+
+            when others =>
+                
+        
+        end case;
+
+
+    end process;
+    -- weight updates should finish immediately.
+    -- FSM state register.
+    FSM_REG : process (clk, reset)
+    begin
+        if (reset = '0') then
+            state <= IDLE;
+        
+        elsif (rising_edge(clk)) then
+            state <= state_next;
+
+        end if;
+
+    end process;
 
 
 end Behavioral;
