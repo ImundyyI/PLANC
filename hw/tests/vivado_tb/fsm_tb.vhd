@@ -73,15 +73,15 @@ begin
         wait for PERIOD;
         err_push <= '0';
         wait for 10*PERIOD;
+        
+        ada_done <= '1';
+        wait for PERIOD;
+        ada_done <= '0';
+        wait for 10*PERIOD;
 
         st_done <= '1';
         wait for PERIOD;
         st_done <= '0';
-        wait for 10*PERIOD;
-
-        ada_done <= '1';
-        wait for PERIOD;
-        ada_done <= '0';
         wait for 10*PERIOD;
 
         lms_done <= '1';
