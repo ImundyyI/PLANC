@@ -10,11 +10,15 @@ entity ctrl_fsm is
         st_done : in std_logic;
         err_push : in std_logic;
         ref_push : in std_logic;
+        lms_done : in std_logic;
+        ada_done : in std_logic;
 
         fx_en_shift : out std_logic;
         fx_en_weight : out std_logic;
         st_en       : out std_logic;
-        reg_en      : out std_logic
+        reg_en      : out std_logic;
+        rd_sel      : out std_logic;
+        out_en      : out std_logic
     );
 end entity;
 
@@ -30,28 +34,43 @@ begin
     -- s.t we dont waste any cycles.
     reg_en <= err_push or ref_push;
 
-    FSM_STATES : process (clk)
+    FSM_STATES : process (state, err_push, st_done, ada_done, lms_done)
     begin
+        state_next <= state;
+        st_en <= '0';
+        fx_en_shift <= '0';
+        fx_en_weight <= '0';
+        rd_sel <= '0';
+        out_en <= '0';
+    
         case state is
             when IDLE =>
-                if (err_push <= '1') then
+                if err_push = '1' then
+                    st_en <= '1';
                     state_next <= STATIC_FIR;
-                else
-                    state_next <= IDLE;
-                end if;      
+                end if; 
             when STATIC_FIR =>
                 -- now that the shift register has the required values.
+                rd_sel <= '1';
+                if st_done = '1' then
+                    fx_en_shift <= '1';
+                    state_next <= SPEAKER;
+                end if;
             when SPEAKER =>
-
-            when WEIGHT_UPDATE =>
-
+                if ada_done = '1' then
+                    out_en <= '1';
+                    state_next <= WEIGHT_UPDATE;
+                end if;
+            when WEIGHT_UPDATE =>                
+                if lms_done = '1' then
+                    fx_en_weight <= '1';
+                    state_next <= IDLE;
+                end if;
             when others =>
                 
-        
         end case;
-
-
     end process;
+    
     -- weight updates should finish immediately.
     -- FSM state register.
     FSM_REG : process (clk, reset)
