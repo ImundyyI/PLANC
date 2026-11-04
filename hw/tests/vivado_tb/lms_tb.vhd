@@ -9,10 +9,12 @@ architecture sim of lms_tb is
     constant PERIOD : time := 10ns;
     constant TAPS : integer := 32;
     constant STEP : integer := 8;
+    constant num_bits_out : integer := 26;
 
     component lms is
         generic (
-            TAPS : integer := 32
+            TAPS : integer := 32;
+            OUT_BITS : integer := 26
         );
         port (
             clk : in std_logic;
@@ -25,7 +27,7 @@ architecture sim of lms_tb is
             fx_en_weight : in std_logic;
 
             lms_done : out std_logic;
-            weights_out : out std_logic_vector(TAPS*32-1 downto 0)
+            weights_out : out std_logic_vector(TAPS*num_bits_out-1 downto 0)
         );
     end component;
 
@@ -37,9 +39,9 @@ architecture sim of lms_tb is
     signal fx_en_weight : std_logic;
 
     signal lms_done     : std_logic;
-    signal weights_out  : std_logic_vector(TAPS*32-1 downto 0);
+    signal weights_out  : std_logic_vector(TAPS*num_bits_out-1 downto 0);
 
-    signal w0, w1, w2, w3 : signed(31 downto 0);
+    signal w0, w1, w2, w3 : signed(num_bits_out-1 downto 0);
 
 begin
 
@@ -60,10 +62,15 @@ begin
         weights_out => weights_out
     );
 
-    w0 <= signed(weights_out(31 downto 0));
-    w1 <= signed(weights_out(63 downto 32));
-    w2 <= signed(weights_out(95 downto 64));
-    w3 <= signed(weights_out(127 downto 96));
+    w0 <= signed(weights_out(num_bits_out-1 downto 0));
+    w1 <= signed(weights_out(2*num_bits_out-1 downto num_bits_out));
+    w2 <= signed(weights_out(3*num_bits_out-1 downto 2*num_bits_out));
+    w3 <= signed(weights_out(4*num_bits_out-1 downto 3*num_bits_out));
+    
+--    w0 <= signed(weights_out(31 downto 0));
+--    w1 <= signed(weights_out(63 downto 32));
+--    w2 <= signed(weights_out(95 downto 64));
+--    w3 <= signed(weights_out(127 downto 96));
 
     main : process
     begin
