@@ -35,7 +35,7 @@ architecture Behavioral of lms is
     signal done1 : std_logic := '0';
     signal done2 : std_logic := '0';
 
-    constant step_size : integer := 8;
+    constant step_size : integer := 10;
 begin
 
     shift_reg : process (clk)
