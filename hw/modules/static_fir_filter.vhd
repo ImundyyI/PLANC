@@ -22,6 +22,8 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
+library work;
+use work.constants.all;
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
 use IEEE.NUMERIC_STD.ALL;
@@ -33,13 +35,16 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity static_fir_filter is
   generic (
-        M : integer := 1024                 
+        M : integer := M;
+        M_BITS : integer := M_BITS                 
   );
+  
   Port ( 
     clk      : in  std_logic;
     en       : in  std_logic;                                     
-    ref      : in  std_logic_vector(18*M-1 downto 0);  
-                
+    ref      : in  std_logic_vector(17 downto 0);  
+    
+    rd_ptr   : out std_logic_vector(M_BITS-1 downto 0);                
     filtered : out std_logic_vector(17 downto 0);                  
     done     : out std_logic                                       
 
@@ -58,9 +63,10 @@ architecture Behavioral of static_fir_filter is
               B   : in std_logic_vector(17 downto 0);
               P   : out std_logic_vector(35 downto 0) );
     end component;
-    signal a_in, b_in : std_logic_vector(17 downto 0);
+    signal a_in : std_logic_vector(17 downto 0);
+    signal b_in : std_logic_vector(17 downto 0) := (others => '0');
     signal prod       : std_logic_vector(35 downto 0);
-    signal busy1, busy2, busy3 : std_logic := '0';
+    signal busy1, busy2, busy3, busy4 : std_logic := '0';
     
     -- the SHAT below needs to be / 2^18 afterwards to get the actual value
     constant SHAT_SHIFT : integer := 18;
@@ -197,8 +203,8 @@ architecture Behavioral of static_fir_filter is
     );
 
 begin
-    a_in <= ref(18*k+17 downto 18*k);
-    b_in <= std_logic_vector(to_signed(SHAT_ROM(k), 18));
+    rd_ptr <= std_logic_vector(to_unsigned(k, M_BITS));
+    a_in <= ref;
     mult: mult_gen_0 port map (CLK => clk, 
                            A => a_in, 
                            B => b_in, 
@@ -221,15 +227,18 @@ process(clk)
                 end if;
             end if;
             
+            b_in <= std_logic_vector(to_signed(SHAT_ROM(k), 18));
+            
             busy1 <= busy;
             busy2 <= busy1;
             busy3 <= busy2;
+            busy4 <= busy3;
             
-            if busy3 = '1' then
+            if busy4 = '1' then
                 sum := acc + signed(prod);
                 acc <= sum;
-                -- busy3 = 1 but busy2 = 0 means this is the last product
-                if busy2 = '0' then
+                -- busy4 = 1 but busy3 = 0 means this is the last product
+                if busy3 = '0' then
                     filtered <= std_logic_vector(sum(SHAT_SHIFT+17 downto SHAT_SHIFT));
                     done     <= '1';
                 end if;
