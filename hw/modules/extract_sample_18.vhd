@@ -7,13 +7,13 @@ use ieee.math_real.all;
 
 entity extract_sample_18 is
     port (
-        input : in std_logic_vector(31 downto 0);
-        output : out std_logic_vector(17 downto 0)
+        din : in std_logic_vector(31 downto 0);
+        dout : out std_logic_vector(17 downto 0)
     );
 end entity;
 
 architecture Behavioral of extract_sample_18 is
 begin
     -- top 8 bits are sign-extension. bottom 6 bits are just padded with 0.
-    output <= input(23 downto 6);
+    dout <= din(23 downto 6);
 end architecture;
