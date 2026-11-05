@@ -22,6 +22,28 @@ add_files -fileset constrs_1 [find_files [file join $hw_dir vivado] *.xdc]
 set vtb [find_files [file join $hw_dir tests vivado_tb] *.vhd]
 if {[llength $vtb] > 0} { add_files -fileset sim_1 $vtb }
 
+# import IP. from hw/ip/ directory.
+set ip_src [file join $hw_dir ip]
+set xci_files [find_files $ip_src *.xci]
+puts "IP search dir : $ip_src"
+puts "XCI found     : $xci_files"
+
+# if there is any files to begin with.
+if {[llength $xci_files] > 0} {
+    # import them as ip.
+    foreach xci $xci_files {
+        import_ip $xci
+    }
+    # quietly upgrade them incase they were stale or for an older version of Vivado for whatevr reason.
+    catch {upgrade_ip -quiet [get_ips]}
+    generate_target all [get_ips]
+    foreach ip [get_ips] {
+        catch {create_ip_run [get_files -quiet "[get_property NAME $ip].xci"]}
+    }
+} else {
+    puts "WARNING: no .xci files under $ip_src"
+}
+
 # Block design (skipped until bd.tcl has been exported)
 set bd_script [file join $hw_dir bd bd.tcl]
 if {[file exists $bd_script] && [file size $bd_script] > 0} {
