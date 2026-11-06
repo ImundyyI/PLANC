@@ -41,10 +41,9 @@ The block diagram layout may change if you recreate the project, just run `Regen
 ## After Making Changes
 If you have made changes to the block diagram on Vivado, you **must** use the `write_bd_tcl` TCL script outlined below, otherwise your changes **will not** be saved and may be overwritten if you run `create_project.tcl`.
 
+
+If you have added IP via `IP Catalog`, right click the IP and click `Copy IP` to the `ip/` directory under `hw/`. Please name it something not dumb. 
 ## Rules
-
-
-
 
 - Hand written source code for module files and/or IP goes in `hw/modules/`. Don't create files inside Vivado's project folders, since Vivado is referencing the files in these folders, which are outside its project hierarchy. For this reason, never run `Copy files to local project directory` or whatever because changes to it wont be reflected `hw/modules/` etc.
 
