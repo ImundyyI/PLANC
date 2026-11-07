@@ -18,7 +18,7 @@ package constants is
     subtype t_fifo_word  is std_logic_vector(DATA_WIDTH - 1 downto 0);
     subtype t_axi_word   is std_logic_vector(DATA_WIDTH - 1 downto 0);
     subtype t_i2s_sample is std_logic_vector(SAMPLE_WIDTH - 1 downto 0);
-
-
-
+    constant NO_NOISE       : std_logic_vector(1 downto 0) := "00";
+    constant ANTI_NOISE     : std_logic_vector(1 downto 0) := "01";
+    constant WHITE_NOISE    : std_logic_vector(1 downto 0) := "10";
 end package;

@@ -14,7 +14,7 @@
 # custom ports. UNCOMMENT IF UR NOT USING.
 set_property PACKAGE_PIN H12 [get_ports pmod_lrcl] ;
 set_property PACKAGE_PIN B10 [get_ports pmod_ref_dout] ;
-#set_property PACKAGE_PIN E10 [get_ports pmod_amp_din] ;
+set_property PACKAGE_PIN E10 [get_ports pmod_amp_din] ;
 set_property PACKAGE_PIN E12 [get_ports pmod_err_dout] ;
 set_property PACKAGE_PIN D10 [get_ports pmod_bclk] ;
 
@@ -26,7 +26,7 @@ set_property PACKAGE_PIN D10 [get_ports pmod_bclk] ;
 
 set_property IOSTANDARD LVCMOS33  [get_ports pmod_lrcl] ;
 set_property IOSTANDARD LVCMOS33  [get_ports pmod_ref_dout] ; 
-#set_property IOSTANDARD LVCMOS33  [get_ports pmod_amp_din] ;
+set_property IOSTANDARD LVCMOS33  [get_ports pmod_amp_din] ;
 set_property IOSTANDARD LVCMOS33  [get_ports pmod_err_dout] ;
 set_property IOSTANDARD LVCMOS33  [get_ports pmod_bclk] ;
 
@@ -41,7 +41,7 @@ set_property IOSTANDARD LVCMOS33  [get_ports pmod_bclk] ;
 
 set_property SLEW SLOW   [get_ports pmod_lrcl] ;
 set_property SLEW SLOW   [get_ports pmod_ref_dout] ; 
-#set_property SLEW SLOW   [get_ports pmod_amp_din] ;
+set_property SLEW SLOW   [get_ports pmod_amp_din] ;
 set_property SLEW SLOW   [get_ports pmod_err_dout] ;
 set_property SLEW SLOW   [get_ports pmod_bclk] ;
 
@@ -56,7 +56,7 @@ set_property SLEW SLOW   [get_ports pmod_bclk] ;
 # will need higher drive for LRCL and BCLK cuz 3 channels read them.
 set_property DRIVE 8   [get_ports pmod_lrcl] ;
 set_property DRIVE 4   [get_ports pmod_ref_dout] ; 
-#set_property DRIVE 4   [get_ports pmod_amp_din] ;
+set_property DRIVE 4   [get_ports pmod_amp_din] ;
 set_property DRIVE 4   [get_ports pmod_err_dout] ;
 set_property DRIVE 8   [get_ports pmod_bclk] ;
 

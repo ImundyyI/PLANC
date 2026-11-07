@@ -46,7 +46,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 # The design that will be created by this Tcl script contains the following 
 # module references:
-# audio_pipeline_new, i2s_master_new, audio_pipeline_new, sin_input, amp_i2s_tx, leap_forward_LFSR, static_fir_filter
+# i2s_master_new, amp_i2s_tx, leap_forward_LFSR, audio_mux, static_fir_filter, general_reg, ctrl_fsm, x_history_buffer, extract_sample_18, lms, extract_sample_18, general_reg, adaptive_fir_filter, audio_pipeline_new, audio_pipeline_new
 
 # Please add the sources of those modules before sourcing this Tcl script.
 
@@ -138,11 +138,10 @@ set bCheckIPs 1
 if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
 xilinx.com:ip:zynq_ultra_ps_e:3.5\
-xilinx.com:ip:axi_dma:7.1\
 xilinx.com:ip:smartconnect:1.0\
 xilinx.com:ip:proc_sys_reset:5.0\
-xilinx.com:ip:ila:6.2\
 xilinx.com:ip:xlconstant:1.1\
+xilinx.com:ip:axi_dma:7.1\
 "
 
    set list_ips_missing ""
@@ -168,13 +167,21 @@ xilinx.com:ip:xlconstant:1.1\
 set bCheckModules 1
 if { $bCheckModules == 1 } {
    set list_check_mods "\ 
-audio_pipeline_new\
 i2s_master_new\
-audio_pipeline_new\
-sin_input\
 amp_i2s_tx\
 leap_forward_LFSR\
+audio_mux\
 static_fir_filter\
+general_reg\
+ctrl_fsm\
+x_history_buffer\
+extract_sample_18\
+lms\
+extract_sample_18\
+general_reg\
+adaptive_fir_filter\
+audio_pipeline_new\
+audio_pipeline_new\
 "
 
    set list_mods_missing ""
@@ -202,6 +209,355 @@ if { $bCheckIPsPassed != 1 } {
 # DESIGN PROCs
 ##################################################################
 
+
+# Hierarchical cell: ref_pipeline
+proc create_hier_cell_ref_pipeline { parentCell nameHier } {
+
+  variable script_folder
+
+  if { $parentCell eq "" || $nameHier eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2092 -severity "ERROR" "create_hier_cell_ref_pipeline() - Empty argument(s)!"}
+     return
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+  # Create cell and set as current instance
+  set hier_obj [create_bd_cell -type hier $nameHier]
+  current_bd_instance $hier_obj
+
+  # Create interface pins
+  create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_LITE
+
+  create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M_AXI_S2MM
+
+
+  # Create pins
+  create_bd_pin -dir I -type clk clk
+  create_bd_pin -dir I -type rst reset
+  create_bd_pin -dir I fifo_wr
+  create_bd_pin -dir O fifo_full
+  create_bd_pin -dir I -from 31 -to 0 fifo_din
+
+  # Create instance: audio_pipeline_new_0, and set properties
+  set block_name audio_pipeline_new
+  set block_cell_name audio_pipeline_new_0
+  if { [catch {set audio_pipeline_new_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $audio_pipeline_new_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: axi_dma_1, and set properties
+  set axi_dma_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_1 ]
+  set_property -dict [list \
+    CONFIG.c_include_mm2s {0} \
+    CONFIG.c_include_sg {0} \
+  ] $axi_dma_1
+
+
+  # Create interface connections
+  connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins axi_dma_1/S_AXI_LITE] [get_bd_intf_pins S_AXI_LITE]
+  connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins axi_dma_1/M_AXI_S2MM] [get_bd_intf_pins M_AXI_S2MM]
+  connect_bd_intf_net -intf_net audio_pipeline_new_0_axis [get_bd_intf_pins audio_pipeline_new_0/axis] [get_bd_intf_pins axi_dma_1/S_AXIS_S2MM]
+
+  # Create port connections
+  connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins audio_pipeline_new_0/fifo_full] [get_bd_pins fifo_full]
+  connect_bd_net -net i2s_master_new_0_ref_din [get_bd_pins fifo_din] [get_bd_pins audio_pipeline_new_0/fifo_din]
+  connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins fifo_wr] [get_bd_pins audio_pipeline_new_0/fifo_wr]
+  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins reset] [get_bd_pins audio_pipeline_new_0/reset] [get_bd_pins axi_dma_1/axi_resetn]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins clk] [get_bd_pins audio_pipeline_new_0/clk] [get_bd_pins axi_dma_1/m_axi_s2mm_aclk] [get_bd_pins axi_dma_1/s_axi_lite_aclk]
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+}
+
+# Hierarchical cell: err_pipeline
+proc create_hier_cell_err_pipeline { parentCell nameHier } {
+
+  variable script_folder
+
+  if { $parentCell eq "" || $nameHier eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2092 -severity "ERROR" "create_hier_cell_err_pipeline() - Empty argument(s)!"}
+     return
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+  # Create cell and set as current instance
+  set hier_obj [create_bd_cell -type hier $nameHier]
+  current_bd_instance $hier_obj
+
+  # Create interface pins
+  create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_LITE
+
+  create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 M_AXI_S2MM
+
+
+  # Create pins
+  create_bd_pin -dir I -type clk clk
+  create_bd_pin -dir I -type rst reset
+  create_bd_pin -dir I fifo_wr
+  create_bd_pin -dir O fifo_full
+  create_bd_pin -dir I -from 31 -to 0 fifo_din
+
+  # Create instance: audio_pipeline_new_1, and set properties
+  set block_name audio_pipeline_new
+  set block_cell_name audio_pipeline_new_1
+  if { [catch {set audio_pipeline_new_1 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $audio_pipeline_new_1 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: axi_dma_0, and set properties
+  set axi_dma_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_0 ]
+  set_property -dict [list \
+    CONFIG.c_include_mm2s {0} \
+    CONFIG.c_include_sg {0} \
+  ] $axi_dma_0
+
+
+  # Create interface connections
+  connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins axi_dma_0/S_AXI_LITE] [get_bd_intf_pins S_AXI_LITE]
+  connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins axi_dma_0/M_AXI_S2MM] [get_bd_intf_pins M_AXI_S2MM]
+  connect_bd_intf_net -intf_net audio_pipeline_new_1_axis [get_bd_intf_pins audio_pipeline_new_1/axis] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
+
+  # Create port connections
+  connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins audio_pipeline_new_1/fifo_full] [get_bd_pins fifo_full]
+  connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins fifo_wr] [get_bd_pins audio_pipeline_new_1/fifo_wr]
+  connect_bd_net -net leap_forward_LFSR_0_fifo_word [get_bd_pins fifo_din] [get_bd_pins audio_pipeline_new_1/fifo_din]
+  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins reset] [get_bd_pins audio_pipeline_new_1/reset] [get_bd_pins axi_dma_0/axi_resetn]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins clk] [get_bd_pins audio_pipeline_new_1/clk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins axi_dma_0/s_axi_lite_aclk]
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+}
+
+# Hierarchical cell: control_system
+proc create_hier_cell_control_system { parentCell nameHier } {
+
+  variable script_folder
+
+  if { $parentCell eq "" || $nameHier eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2092 -severity "ERROR" "create_hier_cell_control_system() - Empty argument(s)!"}
+     return
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+  # Create cell and set as current instance
+  set hier_obj [create_bd_cell -type hier $nameHier]
+  current_bd_instance $hier_obj
+
+  # Create interface pins
+
+  # Create pins
+  create_bd_pin -dir O -from 31 -to 0 dout
+  create_bd_pin -dir I -from 31 -to 0 input1
+  create_bd_pin -dir I -from 31 -to 0 input2
+  create_bd_pin -dir I err_push
+  create_bd_pin -dir I ref_push
+  create_bd_pin -dir I -type clk clk
+  create_bd_pin -dir I -type rst reset
+
+  # Create instance: static_fir_filter_0, and set properties
+  set block_name static_fir_filter
+  set block_cell_name static_fir_filter_0
+  if { [catch {set static_fir_filter_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $static_fir_filter_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+    set_property CONFIG.M_BITS {10} $static_fir_filter_0
+
+
+  # Create instance: antinoise_reg, and set properties
+  set block_name general_reg
+  set block_cell_name antinoise_reg
+  if { [catch {set antinoise_reg [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $antinoise_reg eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: ctrl_fsm, and set properties
+  set block_name ctrl_fsm
+  set block_cell_name ctrl_fsm
+  if { [catch {set ctrl_fsm [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $ctrl_fsm eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: x_history_buffer_0, and set properties
+  set block_name x_history_buffer
+  set block_cell_name x_history_buffer_0
+  if { [catch {set x_history_buffer_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $x_history_buffer_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+    set_property CONFIG.M_BITS {10} $x_history_buffer_0
+
+
+  # Create instance: ref_concat, and set properties
+  set block_name extract_sample_18
+  set block_cell_name ref_concat
+  if { [catch {set ref_concat [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $ref_concat eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: FXLMS, and set properties
+  set block_name lms
+  set block_cell_name FXLMS
+  if { [catch {set FXLMS [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $FXLMS eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: err_concat, and set properties
+  set block_name extract_sample_18
+  set block_cell_name err_concat
+  if { [catch {set err_concat [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $err_concat eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: tie_adaptive_FIR_to_GND, and set properties
+  set tie_adaptive_FIR_to_GND [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 tie_adaptive_FIR_to_GND ]
+  set_property CONFIG.CONST_VAL {0} $tie_adaptive_FIR_to_GND
+
+
+  # Create instance: err_sample_reg, and set properties
+  set block_name general_reg
+  set block_cell_name err_sample_reg
+  if { [catch {set err_sample_reg [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $err_sample_reg eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+    set_property CONFIG.N {18} $err_sample_reg
+
+
+  # Create instance: adaptive_FIR, and set properties
+  set block_name adaptive_fir_filter
+  set block_cell_name adaptive_FIR
+  if { [catch {set adaptive_FIR [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $adaptive_FIR eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create port connections
+  connect_bd_net -net FXLMS_lms_done [get_bd_pins FXLMS/lms_done] [get_bd_pins ctrl_fsm/lms_done]
+  connect_bd_net -net FXLMS_weights_out [get_bd_pins FXLMS/weights_out] [get_bd_pins adaptive_FIR/weights]
+  connect_bd_net -net adaptive_FIR_done [get_bd_pins adaptive_FIR/done] [get_bd_pins ctrl_fsm/ada_done]
+  connect_bd_net -net adaptive_FIR_y [get_bd_pins adaptive_FIR/y] [get_bd_pins antinoise_reg/din]
+  connect_bd_net -net clk_1 [get_bd_pins clk] [get_bd_pins antinoise_reg/clk] [get_bd_pins ctrl_fsm/clk] [get_bd_pins FXLMS/clk] [get_bd_pins x_history_buffer_0/clk] [get_bd_pins err_sample_reg/clk] [get_bd_pins adaptive_FIR/clk] [get_bd_pins static_fir_filter_0/clk]
+  connect_bd_net -net ctrl_fsm_fx_en_shift [get_bd_pins ctrl_fsm/fx_en_shift] [get_bd_pins FXLMS/fx_en_shift]
+  connect_bd_net -net ctrl_fsm_fx_en_weight [get_bd_pins ctrl_fsm/fx_en_weight] [get_bd_pins FXLMS/fx_en_weight]
+  connect_bd_net -net ctrl_fsm_out_en [get_bd_pins ctrl_fsm/out_en] [get_bd_pins antinoise_reg/en]
+  connect_bd_net -net ctrl_fsm_reg_en [get_bd_pins ctrl_fsm/reg_en] [get_bd_pins x_history_buffer_0/en] [get_bd_pins err_sample_reg/en]
+  connect_bd_net -net ctrl_fsm_st_en [get_bd_pins ctrl_fsm/st_en] [get_bd_pins static_fir_filter_0/en]
+  connect_bd_net -net err_concat_dout [get_bd_pins err_concat/dout] [get_bd_pins err_sample_reg/din]
+  connect_bd_net -net err_push_1 [get_bd_pins err_push] [get_bd_pins ctrl_fsm/err_push]
+  connect_bd_net -net err_sample_reg_dout [get_bd_pins err_sample_reg/dout] [get_bd_pins FXLMS/err]
+  connect_bd_net -net extract_sample_18_0_output [get_bd_pins ref_concat/dout] [get_bd_pins x_history_buffer_0/ref_in]
+  connect_bd_net -net general_reg_0_dout [get_bd_pins antinoise_reg/dout] [get_bd_pins dout]
+  connect_bd_net -net input1_1 [get_bd_pins input1] [get_bd_pins ref_concat/din]
+  connect_bd_net -net input2_1 [get_bd_pins input2] [get_bd_pins err_concat/din]
+  connect_bd_net -net ref_push_1 [get_bd_pins ref_push] [get_bd_pins ctrl_fsm/ref_push]
+  connect_bd_net -net reset_1 [get_bd_pins reset] [get_bd_pins antinoise_reg/reset] [get_bd_pins ctrl_fsm/reset] [get_bd_pins FXLMS/reset] [get_bd_pins x_history_buffer_0/reset] [get_bd_pins err_sample_reg/reset]
+  connect_bd_net -net static_fir_filter_0_done [get_bd_pins static_fir_filter_0/done] [get_bd_pins ctrl_fsm/st_done]
+  connect_bd_net -net static_fir_filter_0_filtered [get_bd_pins static_fir_filter_0/filtered] [get_bd_pins FXLMS/est]
+  connect_bd_net -net static_fir_filter_0_rd_ptr [get_bd_pins static_fir_filter_0/rd_ptr] [get_bd_pins x_history_buffer_0/rd_ptr]
+  connect_bd_net -net tie_adaptive_FIR_to_GND_dout [get_bd_pins tie_adaptive_FIR_to_GND/dout] [get_bd_pins adaptive_FIR/en]
+  connect_bd_net -net x_history_buffer_0_ref_out [get_bd_pins x_history_buffer_0/ref_out] [get_bd_pins adaptive_FIR/x] [get_bd_pins static_fir_filter_0/ref_in]
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+}
 
 
 # Procedure to create entire design; Provide argument to make
@@ -239,12 +595,11 @@ proc create_root_design { parentCell } {
   # Create interface ports
 
   # Create ports
-  set pmod_i2s_dout [ create_bd_port -dir I pmod_i2s_dout ]
-  set pmod_i2s_bclk [ create_bd_port -dir O pmod_i2s_bclk ]
-  set pmod_i2s_lrclk [ create_bd_port -dir O pmod_i2s_lrclk ]
-  set pmod_i2s2_dout [ create_bd_port -dir O pmod_i2s2_dout ]
-  set pmod_i2s2_lrclk [ create_bd_port -dir O pmod_i2s2_lrclk ]
-  set pmod_i2s2_bclk [ create_bd_port -dir O pmod_i2s2_bclk ]
+  set pmod_lrcl [ create_bd_port -dir O pmod_lrcl ]
+  set pmod_bclk [ create_bd_port -dir O pmod_bclk ]
+  set pmod_ref_dout [ create_bd_port -dir I pmod_ref_dout ]
+  set pmod_err_dout [ create_bd_port -dir I pmod_err_dout ]
+  set pmod_amp_din [ create_bd_port -dir O pmod_amp_din ]
 
   # Create instance: zynq_ultra_ps_e_0, and set properties
   set zynq_ultra_ps_e_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0 ]
@@ -646,25 +1001,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   ] $zynq_ultra_ps_e_0
 
 
-  # Create instance: audio_pipeline_new_1, and set properties
-  set block_name audio_pipeline_new
-  set block_cell_name audio_pipeline_new_1
-  if { [catch {set audio_pipeline_new_1 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $audio_pipeline_new_1 eq "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
-  # Create instance: axi_dma_0, and set properties
-  set axi_dma_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_0 ]
-  set_property -dict [list \
-    CONFIG.c_include_mm2s {0} \
-    CONFIG.c_include_sg {0} \
-  ] $axi_dma_0
-
-
   # Create instance: i2s_master_new_0, and set properties
   set block_name i2s_master_new
   set block_cell_name i2s_master_new_0
@@ -676,25 +1012,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
      return 1
    }
   
-  # Create instance: audio_pipeline_new_0, and set properties
-  set block_name audio_pipeline_new
-  set block_cell_name audio_pipeline_new_0
-  if { [catch {set audio_pipeline_new_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $audio_pipeline_new_0 eq "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
-  # Create instance: axi_dma_1, and set properties
-  set axi_dma_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_1 ]
-  set_property -dict [list \
-    CONFIG.c_include_mm2s {0} \
-    CONFIG.c_include_sg {0} \
-  ] $axi_dma_1
-
-
   # Create instance: smartconnect_0, and set properties
   set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
   set_property CONFIG.NUM_MI {2} $smartconnect_0
@@ -702,28 +1019,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
   # Create instance: rst_ps8_0_99M, and set properties
   set rst_ps8_0_99M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps8_0_99M ]
-
-  # Create instance: sin_input_0, and set properties
-  set block_name sin_input
-  set block_cell_name sin_input_0
-  if { [catch {set sin_input_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $sin_input_0 eq "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
-  # Create instance: ila_0, and set properties
-  set ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_0 ]
-  set_property -dict [list \
-    CONFIG.C_DATA_DEPTH {8192} \
-    CONFIG.C_MONITOR_TYPE {Native} \
-    CONFIG.C_NUM_OF_PROBES {6} \
-    CONFIG.C_PROBE2_WIDTH {32} \
-    CONFIG.C_PROBE3_WIDTH {32} \
-  ] $ila_0
-
 
   # Create instance: xlconstant_0, and set properties
   set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
@@ -755,64 +1050,83 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
      return 1
    }
   
-  # Create instance: static_fir_filter_0, and set properties
-  set block_name static_fir_filter
-  set block_cell_name static_fir_filter_0
-  if { [catch {set static_fir_filter_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  # Create instance: control_system
+  create_hier_cell_control_system [current_bd_instance .] control_system
+
+  # Create instance: audio_mux_0, and set properties
+  set block_name audio_mux
+  set block_cell_name audio_mux_0
+  if { [catch {set audio_mux_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $static_fir_filter_0 eq "" } {
+   } elseif { $audio_mux_0 eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
+  # Create instance: TIE_TO_WHITE_NOISE, and set properties
+  set TIE_TO_WHITE_NOISE [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 TIE_TO_WHITE_NOISE ]
+  set_property -dict [list \
+    CONFIG.CONST_VAL {2} \
+    CONFIG.CONST_WIDTH {2} \
+  ] $TIE_TO_WHITE_NOISE
+
+
+  # Create instance: err_pipeline
+  create_hier_cell_err_pipeline [current_bd_instance .] err_pipeline
+
+  # Create instance: ref_pipeline
+  create_hier_cell_ref_pipeline [current_bd_instance .] ref_pipeline
+
   # Create interface connections
-  connect_bd_intf_net -intf_net audio_pipeline_new_0_axis [get_bd_intf_pins audio_pipeline_new_0/axis] [get_bd_intf_pins axi_dma_1/S_AXIS_S2MM]
-  connect_bd_intf_net -intf_net audio_pipeline_new_1_axis [get_bd_intf_pins audio_pipeline_new_1/axis] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
-  connect_bd_intf_net -intf_net axi_dma_0_M_AXI_S2MM [get_bd_intf_pins axi_dma_0/M_AXI_S2MM] [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HPC0_FPD]
-  connect_bd_intf_net -intf_net axi_dma_1_M_AXI_S2MM [get_bd_intf_pins axi_dma_1/M_AXI_S2MM] [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HPC1_FPD]
-  connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins axi_dma_0/S_AXI_LITE]
-  connect_bd_intf_net -intf_net smartconnect_0_M01_AXI [get_bd_intf_pins smartconnect_0/M01_AXI] [get_bd_intf_pins axi_dma_1/S_AXI_LITE]
+  connect_bd_intf_net -intf_net err_pipeline_M_AXI_S2MM [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HPC0_FPD] [get_bd_intf_pins err_pipeline/M_AXI_S2MM]
+  connect_bd_intf_net -intf_net ref_pipeline_M_AXI_S2MM [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HPC1_FPD] [get_bd_intf_pins ref_pipeline/M_AXI_S2MM]
+  connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins err_pipeline/S_AXI_LITE]
+  connect_bd_intf_net -intf_net smartconnect_0_M01_AXI [get_bd_intf_pins smartconnect_0/M01_AXI] [get_bd_intf_pins ref_pipeline/S_AXI_LITE]
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM0_FPD [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] [get_bd_intf_pins smartconnect_0/S00_AXI]
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM1_FPD [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM1_FPD] [get_bd_intf_pins smartconnect_0/S01_AXI]
 
   # Create port connections
-  connect_bd_net -net amp_i2s_tx_0_amp_din [get_bd_pins amp_i2s_tx_0/amp_din] [get_bd_ports pmod_i2s2_dout]
-  connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins audio_pipeline_new_0/fifo_full] [get_bd_pins i2s_master_new_0/ref_full]
-  connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins audio_pipeline_new_1/fifo_full] [get_bd_pins i2s_master_new_0/err_full]
-  connect_bd_net -net i2s_master_new_0_err_din [get_bd_pins i2s_master_new_0/err_din] [get_bd_pins ila_0/probe3] [get_bd_pins leap_forward_LFSR_0/err_din]
-  connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins i2s_master_new_0/err_w_stb] [get_bd_pins audio_pipeline_new_1/fifo_wr] [get_bd_pins ila_0/probe5] [get_bd_pins leap_forward_LFSR_0/step]
-  connect_bd_net -net i2s_master_new_0_i2s_bclk [get_bd_pins i2s_master_new_0/i2s_bclk] [get_bd_pins ila_0/probe0] [get_bd_pins sin_input_0/bclk] [get_bd_ports pmod_i2s_bclk] [get_bd_ports pmod_i2s2_bclk] [get_bd_pins amp_i2s_tx_0/i2s_bclk]
-  connect_bd_net -net i2s_master_new_0_i2s_lrcl [get_bd_pins i2s_master_new_0/i2s_lrcl] [get_bd_pins ila_0/probe1] [get_bd_pins sin_input_0/lrcl] [get_bd_ports pmod_i2s_lrclk] [get_bd_ports pmod_i2s2_lrclk] [get_bd_pins amp_i2s_tx_0/i2s_lrcl]
-  connect_bd_net -net i2s_master_new_0_ref_din [get_bd_pins i2s_master_new_0/ref_din] [get_bd_pins audio_pipeline_new_0/fifo_din] [get_bd_pins ila_0/probe2]
-  connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins i2s_master_new_0/ref_w_stb] [get_bd_pins audio_pipeline_new_0/fifo_wr] [get_bd_pins ila_0/probe4]
-  connect_bd_net -net leap_forward_LFSR_0_dout [get_bd_pins leap_forward_LFSR_0/dout] [get_bd_pins amp_i2s_tx_0/din]
-  connect_bd_net -net leap_forward_LFSR_0_fifo_word [get_bd_pins leap_forward_LFSR_0/fifo_word] [get_bd_pins audio_pipeline_new_1/fifo_din]
-  connect_bd_net -net pmod_i2s_dout_1 [get_bd_ports pmod_i2s_dout] [get_bd_pins i2s_master_new_0/i2s_err_dout]
-  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_pins audio_pipeline_new_0/reset] [get_bd_pins audio_pipeline_new_1/reset] [get_bd_pins axi_dma_0/axi_resetn] [get_bd_pins axi_dma_1/axi_resetn]
-  connect_bd_net -net xlconstant_0_dout [get_bd_pins xlconstant_0/dout] [get_bd_pins i2s_master_new_0/i2s_ref_dout] [get_bd_pins i2s_master_new_0/debug]
+  connect_bd_net -net amp_i2s_tx_0_amp_din [get_bd_pins amp_i2s_tx_0/amp_din] [get_bd_ports pmod_amp_din]
+  connect_bd_net -net audio_mux_0_dout [get_bd_pins audio_mux_0/dout] [get_bd_pins amp_i2s_tx_0/din]
+  connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins ref_pipeline/fifo_full] [get_bd_pins i2s_master_new_0/ref_full]
+  connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins err_pipeline/fifo_full] [get_bd_pins i2s_master_new_0/err_full]
+  connect_bd_net -net control_system_dout [get_bd_pins control_system/dout] [get_bd_pins audio_mux_0/anti_noise]
+  connect_bd_net -net i2s_master_new_0_err_din [get_bd_pins i2s_master_new_0/err_din] [get_bd_pins leap_forward_LFSR_0/err_din] [get_bd_pins control_system/input2] [get_bd_pins err_pipeline/fifo_din]
+  connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins i2s_master_new_0/err_w_stb] [get_bd_pins leap_forward_LFSR_0/step] [get_bd_pins control_system/err_push] [get_bd_pins err_pipeline/fifo_wr]
+  connect_bd_net -net i2s_master_new_0_i2s_bclk [get_bd_pins i2s_master_new_0/i2s_bclk] [get_bd_pins amp_i2s_tx_0/i2s_bclk] [get_bd_ports pmod_bclk]
+  connect_bd_net -net i2s_master_new_0_i2s_lrcl [get_bd_pins i2s_master_new_0/i2s_lrcl] [get_bd_pins amp_i2s_tx_0/i2s_lrcl] [get_bd_ports pmod_lrcl]
+  connect_bd_net -net i2s_master_new_0_ref_din [get_bd_pins i2s_master_new_0/ref_din] [get_bd_pins control_system/input1] [get_bd_pins ref_pipeline/fifo_din]
+  connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins i2s_master_new_0/ref_w_stb] [get_bd_pins control_system/ref_push] [get_bd_pins ref_pipeline/fifo_wr]
+  connect_bd_net -net leap_forward_LFSR_0_dout [get_bd_pins leap_forward_LFSR_0/dout] [get_bd_pins audio_mux_0/white_noise]
+  connect_bd_net -net pmod_err_dout_1 [get_bd_ports pmod_err_dout] [get_bd_pins i2s_master_new_0/i2s_err_dout]
+  connect_bd_net -net pmod_ref_dout_1 [get_bd_ports pmod_ref_dout] [get_bd_pins i2s_master_new_0/i2s_ref_dout]
+  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_pins control_system/reset] [get_bd_pins err_pipeline/reset] [get_bd_pins ref_pipeline/reset]
+  connect_bd_net -net xlconstant_0_dout [get_bd_pins xlconstant_0/dout] [get_bd_pins i2s_master_new_0/debug]
   connect_bd_net -net xlconstant_1_dout [get_bd_pins xlconstant_1/dout] [get_bd_pins amp_i2s_tx_0/din_stb]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins audio_pipeline_new_0/clk] [get_bd_pins axi_dma_1/m_axi_s2mm_aclk] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins audio_pipeline_new_1/clk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins axi_dma_0/s_axi_lite_aclk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins axi_dma_1/s_axi_lite_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins i2s_master_new_0/clk] [get_bd_pins ila_0/clk] [get_bd_pins amp_i2s_tx_0/clk] [get_bd_pins leap_forward_LFSR_0/clk]
+  connect_bd_net -net xlconstant_2_dout [get_bd_pins TIE_TO_WHITE_NOISE/dout] [get_bd_pins audio_mux_0/sel]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins i2s_master_new_0/clk] [get_bd_pins amp_i2s_tx_0/clk] [get_bd_pins leap_forward_LFSR_0/clk] [get_bd_pins control_system/clk] [get_bd_pins err_pipeline/clk] [get_bd_pins ref_pipeline/clk]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins rst_ps8_0_99M/ext_reset_in]
 
   # Create address segments
-  assign_bd_address -offset 0xA0000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_dma_0/S_AXI_LITE/Reg] -force
-  assign_bd_address -offset 0xA0010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_dma_1/S_AXI_LITE/Reg] -force
-  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_LOW] -force
-  assign_bd_address -offset 0xC0000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_QSPI] -force
-  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_DDR_LOW] -force
-  assign_bd_address -offset 0xC0000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_QSPI] -force
+  assign_bd_address -offset 0xA0000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs err_pipeline/axi_dma_0/S_AXI_LITE/Reg] -force
+  assign_bd_address -offset 0xA0010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs ref_pipeline/axi_dma_1/S_AXI_LITE/Reg] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces err_pipeline/axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_LOW] -force
+  assign_bd_address -offset 0xC0000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces err_pipeline/axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_QSPI] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces ref_pipeline/axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_DDR_LOW] -force
+  assign_bd_address -offset 0xC0000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces ref_pipeline/axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_QSPI] -force
 
   # Exclude Address Segments
-  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_HIGH]
-  exclude_bd_addr_seg -offset 0xFF000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_LPS_OCM]
-  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_DDR_HIGH]
-  exclude_bd_addr_seg -offset 0xFF000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_LPS_OCM]
+  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces err_pipeline/axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_HIGH]
+  exclude_bd_addr_seg -offset 0xFF000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces err_pipeline/axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_LPS_OCM]
+  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces ref_pipeline/axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_DDR_HIGH]
+  exclude_bd_addr_seg -offset 0xFF000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces ref_pipeline/axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_LPS_OCM]
 
 
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -824,6 +1138,4 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
 create_root_design ""
 
-
-common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
