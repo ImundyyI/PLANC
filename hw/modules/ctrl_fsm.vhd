@@ -17,7 +17,6 @@ entity ctrl_fsm is
         fx_en_weight : out std_logic;
         st_en       : out std_logic;
         reg_en      : out std_logic;
-        rd_sel      : out std_logic;
         out_en      : out std_logic
     );
 end entity;
@@ -40,7 +39,6 @@ begin
         st_en <= '0';
         fx_en_shift <= '0';
         fx_en_weight <= '0';
-        rd_sel <= '0';
         out_en <= '0';
     
         case state is

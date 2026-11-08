@@ -72,16 +72,25 @@ architecture Behavioral of adaptive_fir_filter is
     signal y_sig : std_logic_vector(31 downto 0) := (others => '0');
     signal weights_sig : weights_sig_t;
     signal curr_weight : std_logic_vector(25 downto 0);
-    signal x_sig      : std_logic_vector(17 downto 0);  -- x_sig_t
+    signal x_sig      : std_logic_vector(17 downto 0) := (others => '0');  -- x_sig_t
     signal en_sig     : std_logic;
     signal mult_sig   : std_logic_vector(43 downto 0); -- convol_mult_sig_t;
     signal tap_count  : integer range 0 to NUM_TAPS + MULT_DELAY := 0;
     signal running    : std_logic := '0';
     signal sum        : signed(48 downto 0); -- see earlier NOTE in port listing
     signal weight_index : integer range 0 to NUM_TAPS - 1 := 0;
+    
+    signal wait1    : std_logic;
+    signal wait2    : std_logic;
 begin
     en_sig <= en;
     x_sig <= x;
+    
+    process(clk)
+    begin
+        wait1 <= en_sig;
+        wait2 <= wait1;
+    end process;
 
     gen_signed_signals : for i in 0 to NUM_TAPS - 1 generate
         -- x_sig(i) <= signed(x((18 * i + 17) downto (18 * i)));  --- Synchronous loading into signed arrays
@@ -109,7 +118,7 @@ begin
             --  for i in 0 to NUM_TAPS - 1 loop
             --    sum := sum + resize(x_sig(NUM_TAPS - 1 - i) * weights_sig(i), 41); -- Allegedly multiplier block is used already in operand multipplication
             -- end loop;
-            if running = '0' then  -- We have 3 delay cycles so on the 
+            if wait2 = '1' then  -- We have 3 delay cycles so on the 
                 sum <= (others => '0');
                 tap_count <= 0;
                 weight_index <= 0;
@@ -128,13 +137,15 @@ begin
                 end if;
 
                 if tap_count = NUM_TAPS + MULT_DELAY then
-                    if (sum >= MAX_VAL) then
-                        y_sig <= std_logic_vector(MAX_VAL(31 downto 0));  -- If the sum is larger than 32 bit max we will just peak it
-                    elsif (sum <= MIN_VAL) then                           -- yes this will peak the speakers but we shouldn't see this happen too often
-                        y_sig <= std_logic_vector(MIN_VAL(31 downto 0));
-                    else
-                        y_sig <= std_logic_vector(sum(31 downto 0));
-                    end if;
+--                    if (sum >= MAX_VAL) then
+--                        y_sig <= std_logic_vector(MAX_VAL(31 downto 0));  -- If the sum is larger than 32 bit max we will just peak it
+--                    elsif (sum <= MIN_VAL) then                           -- yes this will peak the speakers but we shouldn't see this happen too often
+--                        y_sig <= std_logic_vector(MIN_VAL(31 downto 0));
+--                    else
+--                        y_sig <= std_logic_vector(sum(31 downto 0));
+--                    end if;
+                    
+                    y_sig <= std_logic_vector(resize(shift_right(sum, 21), 32));
                     running <=  '0';
                     done <= '1';
                 else
