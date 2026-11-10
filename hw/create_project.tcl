@@ -15,16 +15,12 @@ proc find_files {dir pattern} {
 create_project anc $proj_dir -part xck26-sfvc784-2LV-c -force
 set_property board_part xilinx.com:kv260_som:part0:1.4 [current_project]
 
-set all_mods [find_files [file join $hw_dir modules] *.vhd]
-set wrap     [lsearch -all -inline $all_mods *ctrl_wrapper.vhd]
-set synth    [lsearch -all -inline -not $all_mods *ctrl_wrapper.vhd]
-add_files $synth
+add_files [find_files [file join $hw_dir modules] *.vhd]
 set_property file_type {VHDL} [get_files -filter {FILE_TYPE == VHDL}]
 add_files -fileset constrs_1 [find_files [file join $hw_dir vivado] *.xdc]
 
 set vtb [find_files [file join $hw_dir tests vivado_tb] *.vhd]
 if {[llength $vtb] > 0} { add_files -fileset sim_1 $vtb }
-if {[llength $wrap] > 0} { add_files -fileset sim_1 $wrap }
 
 # import IP. from hw/ip/ directory.
 set ip_src [file join $hw_dir ip]
@@ -48,8 +44,6 @@ if {[llength $xci_files] > 0} {
     puts "WARNING: no .xci files under $ip_src"
 }
 
-update_compile_order -fileset sources_1
-
 # Block design (skipped until bd.tcl has been exported)
 set bd_script [file join $hw_dir bd bd.tcl]
 if {[file exists $bd_script] && [file size $bd_script] > 0} {
@@ -61,3 +55,4 @@ if {[file exists $bd_script] && [file size $bd_script] > 0} {
 } else {
     puts "No block design script yet, skipping."
 }
+update_compile_order -fileset sources_1
