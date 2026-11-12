@@ -29,7 +29,7 @@ architecture Behavioral of audio_pipeline_new is
     component fifo is
         generic (
             DATA_WIDTH : positive := 32;
-            FIFO_DEPTH : positive := 5
+            FIFO_DEPTH : positive := 12
         );
         port (
             clkw    : in  std_logic; -- asynchronous FIFO.
