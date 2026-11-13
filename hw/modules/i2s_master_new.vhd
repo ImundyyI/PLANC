@@ -49,7 +49,7 @@ architecture Behavioral of i2s_master_new is
 
 
     -- runs a counter that mimics a ramp signal.
-    signal debug_cnt : unsigned(DATA_WIDTH - 1 downto 0) := (Others => '0');
+    signal debug_cnt : unsigned(15 downto 0) := (Others => '0');
 
 begin
     i2s_bclk <= bclk;
@@ -106,8 +106,8 @@ begin
                         ref_push <= '1';
                         -- TODO: remove when project is confifmed donep ls.
                         if (debug = '1') then
-                            err_din <= std_logic_vector(debug_cnt);
-                            ref_din <= std_logic_vector(debug_cnt);
+                            err_din <= X"0000" & std_logic_vector(debug_cnt);
+                            ref_din <= X"0000" & std_logic_vector(debug_cnt);
                         else
                             err_din <= err_shift_data_xtend;
                             ref_din <= ref_shift_data_xtend;
@@ -127,7 +127,12 @@ begin
     begin
         if (rising_edge(clk)) then
             if (err_push = '1' or ref_push = '1') then 
-                debug_cnt <= debug_cnt + 1; 
+                if (debug_cnt >= 15000) then
+                    debug_cnt <= (Others => '0');
+                else 
+                    debug_cnt <= debug_cnt + 180; 
+                end if;
+                
             end if; 
         end if;
     end process;
