@@ -46,7 +46,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 # The design that will be created by this Tcl script contains the following 
 # module references:
-# i2s_master_new, amp_i2s_tx, leap_forward_LFSR, audio_mux, offset, offset, audio_pipeline_new, audio_pipeline_new, ctrl_wrapper
+# i2s_master_new, amp_i2s_tx, leap_forward_LFSR, audio_mux, offset, offset, audio_pipeline_new, audio_pipeline_new, ctrl_wrapper, output_limiter
 
 # Please add the sources of those modules before sourcing this Tcl script.
 
@@ -177,6 +177,7 @@ offset\
 audio_pipeline_new\
 audio_pipeline_new\
 ctrl_wrapper\
+output_limiter\
 "
 
    set list_mods_missing ""
@@ -710,7 +711,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Create instance: SEL_CONST, and set properties
   set SEL_CONST [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 SEL_CONST ]
   set_property -dict [list \
-    CONFIG.CONST_VAL {3} \
+    CONFIG.CONST_VAL {1} \
     CONFIG.CONST_WIDTH {3} \
   ] $SEL_CONST
 
@@ -758,12 +759,12 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   set_property -dict [list \
     CONFIG.C_DATA_DEPTH {16384} \
     CONFIG.C_MONITOR_TYPE {Native} \
-    CONFIG.C_NUM_OF_PROBES {9} \
+    CONFIG.C_NUM_OF_PROBES {10} \
     CONFIG.C_PROBE0_WIDTH {32} \
     CONFIG.C_PROBE1_WIDTH {32} \
     CONFIG.C_PROBE2_WIDTH {32} \
     CONFIG.C_PROBE3_WIDTH {32} \
-    CONFIG.C_PROBE7_WIDTH {32} \
+    CONFIG.C_PROBE7_WIDTH {1} \
   ] $ila_0
 
 
@@ -834,6 +835,17 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   ] $offset_0
 
 
+  # Create instance: output_limiter_0, and set properties
+  set block_name output_limiter
+  set block_cell_name output_limiter_0
+  if { [catch {set output_limiter_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $output_limiter_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
   # Create interface connections
   connect_bd_intf_net -intf_net audio_pipeline_new_0_axis [get_bd_intf_pins audio_pipeline_new_0/axis] [get_bd_intf_pins axi_dma_1/S_AXIS_S2MM]
   connect_bd_intf_net -intf_net audio_pipeline_new_1_axis [get_bd_intf_pins audio_pipeline_new_1/axis] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
@@ -846,7 +858,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
   # Create port connections
   connect_bd_net -net amp_i2s_tx_0_amp_din [get_bd_pins amp_i2s_tx_0/amp_din] [get_bd_ports pmod_amp_din]
-  connect_bd_net -net audio_mux_0_dout [get_bd_pins audio_mux_0/dout] [get_bd_pins amp_i2s_tx_0/din] [get_bd_pins ila_0/probe8]
+  connect_bd_net -net audio_mux_0_dout [get_bd_pins audio_mux_0/dout] [get_bd_pins ila_0/probe8] [get_bd_pins output_limiter_0/din]
   connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins audio_pipeline_new_0/fifo_full] [get_bd_pins ila_0/probe7] [get_bd_pins i2s_master_new_0/ref_full]
   connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins audio_pipeline_new_1/fifo_full] [get_bd_pins ila_0/probe6] [get_bd_pins i2s_master_new_0/err_full]
   connect_bd_net -net ctrl_wrapper_0_audio_out [get_bd_pins ctrl_wrapper_0/audio_out] [get_bd_pins audio_mux_0/anti_noise]
@@ -860,6 +872,8 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net offset_0_dout [get_bd_pins err_offset_remover/dout] [get_bd_pins leap_forward_LFSR_0/err_din] [get_bd_pins ila_0/probe3] [get_bd_pins ctrl_wrapper_0/err_din] [get_bd_pins audio_pipeline_new_1/fifo_din] [get_bd_pins audio_mux_0/err_din]
   connect_bd_net -net offset_40k_dout [get_bd_pins offset_40k/dout] [get_bd_pins ref_offset_remover/offset]
   connect_bd_net -net offset_60k_dout [get_bd_pins offset_60k/dout] [get_bd_pins err_offset_remover/offset]
+  connect_bd_net -net output_limiter_0_dout [get_bd_pins output_limiter_0/dout] [get_bd_pins amp_i2s_tx_0/din]
+  connect_bd_net -net output_limiter_0_sat [get_bd_pins output_limiter_0/sat] [get_bd_pins ila_0/probe9]
   connect_bd_net -net pmod_err_dout_1 [get_bd_ports pmod_err_dout] [get_bd_pins i2s_master_new_0/i2s_err_dout]
   connect_bd_net -net pmod_ref_dout_1 [get_bd_ports pmod_ref_dout] [get_bd_pins i2s_master_new_0/i2s_ref_dout]
   connect_bd_net -net ref_offset_remover_dout [get_bd_pins ref_offset_remover/dout] [get_bd_pins ila_0/probe2] [get_bd_pins ctrl_wrapper_0/ref_din] [get_bd_pins audio_pipeline_new_0/fifo_din] [get_bd_pins audio_mux_0/ref_din]
