@@ -668,7 +668,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
   # Create instance: xlconstant_0, and set properties
   set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
-  set_property CONFIG.CONST_VAL {1} $xlconstant_0
+  set_property CONFIG.CONST_VAL {0} $xlconstant_0
 
 
   # Create instance: amp_i2s_tx_0, and set properties
@@ -858,7 +858,8 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins i2s_master_new_0/ref_w_stb] [get_bd_pins ctrl_wrapper_0/ref_push] [get_bd_pins audio_pipeline_new_0/fifo_wr]
   connect_bd_net -net leap_forward_LFSR_0_dout [get_bd_pins leap_forward_LFSR_0/dout] [get_bd_pins audio_mux_0/white_noise]
   connect_bd_net -net offset_0_dout [get_bd_pins err_offset_remover/dout] [get_bd_pins leap_forward_LFSR_0/err_din] [get_bd_pins ila_0/probe3] [get_bd_pins ctrl_wrapper_0/err_din] [get_bd_pins audio_pipeline_new_1/fifo_din] [get_bd_pins audio_mux_0/err_din]
-  connect_bd_net -net offset_40k1_dout [get_bd_pins offset_0/dout] [get_bd_pins ref_offset_remover/offset] [get_bd_pins err_offset_remover/offset]
+  connect_bd_net -net offset_40k_dout [get_bd_pins offset_40k/dout] [get_bd_pins ref_offset_remover/offset]
+  connect_bd_net -net offset_60k_dout [get_bd_pins offset_60k/dout] [get_bd_pins err_offset_remover/offset]
   connect_bd_net -net pmod_err_dout_1 [get_bd_ports pmod_err_dout] [get_bd_pins i2s_master_new_0/i2s_err_dout]
   connect_bd_net -net pmod_ref_dout_1 [get_bd_ports pmod_ref_dout] [get_bd_pins i2s_master_new_0/i2s_ref_dout]
   connect_bd_net -net ref_offset_remover_dout [get_bd_pins ref_offset_remover/dout] [get_bd_pins ila_0/probe2] [get_bd_pins ctrl_wrapper_0/ref_din] [get_bd_pins audio_pipeline_new_0/fifo_din] [get_bd_pins audio_mux_0/ref_din]
