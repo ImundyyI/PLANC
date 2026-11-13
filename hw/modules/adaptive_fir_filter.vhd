@@ -81,15 +81,15 @@ architecture Behavioral of adaptive_fir_filter is
     signal weight_index : integer range 0 to NUM_TAPS - 1 := 0;
     
     signal wait1    : std_logic;
-    signal wait2    : std_logic;
 begin
     en_sig <= en;
     x_sig <= x;
     
     process(clk)
     begin
-        wait1 <= en_sig;
-        wait2 <= wait1;
+        if rising_edge(clk) then 
+            wait1 <= en_sig;
+        end if;
     end process;
 
     gen_signed_signals : for i in 0 to NUM_TAPS - 1 generate
@@ -118,7 +118,7 @@ begin
             --  for i in 0 to NUM_TAPS - 1 loop
             --    sum := sum + resize(x_sig(NUM_TAPS - 1 - i) * weights_sig(i), 41); -- Allegedly multiplier block is used already in operand multipplication
             -- end loop;
-            if wait2 = '1' then  -- We have 3 delay cycles so on the 
+            if wait1 = '1' then  -- We have 3 delay cycles so on the 
                 sum <= (others => '0');
                 tap_count <= 0;
                 weight_index <= 0;
