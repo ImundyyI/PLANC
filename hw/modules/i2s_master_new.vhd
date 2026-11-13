@@ -97,10 +97,10 @@ begin
                 err_shift_data <= err_shift_data(22 downto 0) & i2s_err_dout;
                 ref_shift_data <= ref_shift_data(22 downto 0) & i2s_ref_dout;
 
-                -- have to latch on 24th bit count bcuz the final
+                -- have to latch on 25th bit count bcuz the final
                 -- sign extended state happens on the rising edge producing
-                -- the 23rd. if we did that on the 23rd it would see the old value.
-                if (bit_count = 24) then
+                -- the 24th. if we did that on the 24th it would see the old value.
+                if (bit_count = 25) then
                     if (ws = '0') then
                         err_push <= '1';
                         ref_push <= '1';

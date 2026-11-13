@@ -62,7 +62,7 @@ begin
     -- so the fifo shouldn't block other system operations.
     sig_fifo_wr <= fifo_wr and not sig_fifo_full;
 
-    INST_FIFO : fifo generic map ( DATA_WIDTH => DATA_WIDTH, FIFO_DEPTH => 5) 
+    INST_FIFO : fifo generic map ( DATA_WIDTH => DATA_WIDTH, FIFO_DEPTH => 12) 
                         port map (
                                     clkw => clk,
                                     clkr => clk,

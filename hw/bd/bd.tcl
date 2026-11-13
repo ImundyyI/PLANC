@@ -707,12 +707,12 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
      return 1
    }
   
-  # Create instance: TIE_TO_WHITE_NOISE, and set properties
-  set TIE_TO_WHITE_NOISE [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 TIE_TO_WHITE_NOISE ]
+  # Create instance: SEL_CONST, and set properties
+  set SEL_CONST [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 SEL_CONST ]
   set_property -dict [list \
-    CONFIG.CONST_VAL {2} \
-    CONFIG.CONST_WIDTH {2} \
-  ] $TIE_TO_WHITE_NOISE
+    CONFIG.CONST_VAL {3} \
+    CONFIG.CONST_WIDTH {3} \
+  ] $SEL_CONST
 
 
   # Create instance: err_offset_remover, and set properties
@@ -729,7 +729,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Create instance: offset_40k, and set properties
   set offset_40k [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 offset_40k ]
   set_property -dict [list \
-    CONFIG.CONST_VAL {0} \
+    CONFIG.CONST_VAL {587680} \
     CONFIG.CONST_WIDTH {32} \
   ] $offset_40k
 
@@ -748,7 +748,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Create instance: offset_60k, and set properties
   set offset_60k [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 offset_60k ]
   set_property -dict [list \
-    CONFIG.CONST_VAL {0} \
+    CONFIG.CONST_VAL {402912} \
     CONFIG.CONST_WIDTH {32} \
   ] $offset_60k
 
@@ -758,11 +758,12 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   set_property -dict [list \
     CONFIG.C_DATA_DEPTH {16384} \
     CONFIG.C_MONITOR_TYPE {Native} \
-    CONFIG.C_NUM_OF_PROBES {6} \
+    CONFIG.C_NUM_OF_PROBES {9} \
     CONFIG.C_PROBE0_WIDTH {32} \
     CONFIG.C_PROBE1_WIDTH {32} \
     CONFIG.C_PROBE2_WIDTH {32} \
     CONFIG.C_PROBE3_WIDTH {32} \
+    CONFIG.C_PROBE7_WIDTH {32} \
   ] $ila_0
 
 
@@ -817,6 +818,14 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
      return 1
    }
   
+  # Create instance: xlconstant_2, and set properties
+  set xlconstant_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_2 ]
+  set_property -dict [list \
+    CONFIG.CONST_VAL {0} \
+    CONFIG.CONST_WIDTH {32} \
+  ] $xlconstant_2
+
+
   # Create interface connections
   connect_bd_intf_net -intf_net audio_pipeline_new_0_axis [get_bd_intf_pins audio_pipeline_new_0/axis] [get_bd_intf_pins axi_dma_1/S_AXIS_S2MM]
   connect_bd_intf_net -intf_net audio_pipeline_new_1_axis [get_bd_intf_pins audio_pipeline_new_1/axis] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
@@ -829,9 +838,9 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
   # Create port connections
   connect_bd_net -net amp_i2s_tx_0_amp_din [get_bd_pins amp_i2s_tx_0/amp_din] [get_bd_ports pmod_amp_din]
-  connect_bd_net -net audio_mux_0_dout [get_bd_pins audio_mux_0/dout] [get_bd_pins amp_i2s_tx_0/din]
-  connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins audio_pipeline_new_0/fifo_full] [get_bd_pins i2s_master_new_0/ref_full]
-  connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins audio_pipeline_new_1/fifo_full] [get_bd_pins i2s_master_new_0/err_full]
+  connect_bd_net -net audio_mux_0_dout [get_bd_pins audio_mux_0/dout] [get_bd_pins amp_i2s_tx_0/din] [get_bd_pins ila_0/probe8]
+  connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins audio_pipeline_new_0/fifo_full] [get_bd_pins ila_0/probe7] [get_bd_pins i2s_master_new_0/ref_full]
+  connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins audio_pipeline_new_1/fifo_full] [get_bd_pins ila_0/probe6] [get_bd_pins i2s_master_new_0/err_full]
   connect_bd_net -net ctrl_wrapper_0_audio_out [get_bd_pins ctrl_wrapper_0/audio_out] [get_bd_pins audio_mux_0/anti_noise]
   connect_bd_net -net i2s_master_new_0_err_din [get_bd_pins i2s_master_new_0/err_din] [get_bd_pins err_offset_remover/din] [get_bd_pins ila_0/probe1]
   connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins i2s_master_new_0/err_w_stb] [get_bd_pins leap_forward_LFSR_0/step] [get_bd_pins ctrl_wrapper_0/err_push] [get_bd_pins audio_pipeline_new_1/fifo_wr]
@@ -840,16 +849,17 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net i2s_master_new_0_ref_din [get_bd_pins i2s_master_new_0/ref_din] [get_bd_pins ref_offset_remover/din] [get_bd_pins ila_0/probe0]
   connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins i2s_master_new_0/ref_w_stb] [get_bd_pins ctrl_wrapper_0/ref_push] [get_bd_pins audio_pipeline_new_0/fifo_wr]
   connect_bd_net -net leap_forward_LFSR_0_dout [get_bd_pins leap_forward_LFSR_0/dout] [get_bd_pins audio_mux_0/white_noise]
-  connect_bd_net -net offset_0_dout [get_bd_pins err_offset_remover/dout] [get_bd_pins leap_forward_LFSR_0/err_din] [get_bd_pins ila_0/probe3] [get_bd_pins ctrl_wrapper_0/err_din] [get_bd_pins audio_pipeline_new_1/fifo_din]
+  connect_bd_net -net offset_0_dout [get_bd_pins err_offset_remover/dout] [get_bd_pins leap_forward_LFSR_0/err_din] [get_bd_pins ila_0/probe3] [get_bd_pins ctrl_wrapper_0/err_din] [get_bd_pins audio_pipeline_new_1/fifo_din] [get_bd_pins audio_mux_0/err_din]
   connect_bd_net -net offset_40k_dout [get_bd_pins offset_40k/dout] [get_bd_pins ref_offset_remover/offset]
   connect_bd_net -net offset_60k_dout [get_bd_pins offset_60k/dout] [get_bd_pins err_offset_remover/offset]
   connect_bd_net -net pmod_err_dout_1 [get_bd_ports pmod_err_dout] [get_bd_pins i2s_master_new_0/i2s_err_dout]
   connect_bd_net -net pmod_ref_dout_1 [get_bd_ports pmod_ref_dout] [get_bd_pins i2s_master_new_0/i2s_ref_dout]
-  connect_bd_net -net ref_offset_remover_dout [get_bd_pins ref_offset_remover/dout] [get_bd_pins ila_0/probe2] [get_bd_pins ctrl_wrapper_0/ref_din] [get_bd_pins audio_pipeline_new_0/fifo_din]
+  connect_bd_net -net ref_offset_remover_dout [get_bd_pins ref_offset_remover/dout] [get_bd_pins ila_0/probe2] [get_bd_pins ctrl_wrapper_0/ref_din] [get_bd_pins audio_pipeline_new_0/fifo_din] [get_bd_pins audio_mux_0/ref_din]
   connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_pins axi_dma_0/axi_resetn] [get_bd_pins axi_dma_1/axi_resetn] [get_bd_pins ctrl_wrapper_0/reset] [get_bd_pins audio_pipeline_new_0/reset] [get_bd_pins audio_pipeline_new_1/reset]
   connect_bd_net -net xlconstant_0_dout [get_bd_pins xlconstant_0/dout] [get_bd_pins i2s_master_new_0/debug]
   connect_bd_net -net xlconstant_1_dout [get_bd_pins xlconstant_1/dout] [get_bd_pins amp_i2s_tx_0/din_stb]
-  connect_bd_net -net xlconstant_2_dout [get_bd_pins TIE_TO_WHITE_NOISE/dout] [get_bd_pins audio_mux_0/sel]
+  connect_bd_net -net xlconstant_2_dout [get_bd_pins SEL_CONST/dout] [get_bd_pins audio_mux_0/sel]
+  connect_bd_net -net xlconstant_2_dout1 [get_bd_pins xlconstant_2/dout] [get_bd_pins audio_mux_0/alt]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins amp_i2s_tx_0/clk] [get_bd_pins leap_forward_LFSR_0/clk] [get_bd_pins ila_0/clk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins axi_dma_0/s_axi_lite_aclk] [get_bd_pins axi_dma_1/m_axi_s2mm_aclk] [get_bd_pins axi_dma_1/s_axi_lite_aclk] [get_bd_pins ctrl_wrapper_0/clk] [get_bd_pins audio_pipeline_new_0/clk] [get_bd_pins audio_pipeline_new_1/clk] [get_bd_pins i2s_master_new_0/clk]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins rst_ps8_0_99M/ext_reset_in]
 
