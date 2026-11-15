@@ -26,8 +26,8 @@ begin
     err_noise_concat <= std_logic_vector(shift_right(signed(err_din), 1));
     ref_noise_concat <= std_logic_vector(shift_right(signed(ref_din), 1));
     
-    dout <= anti_noise      when (sel = ANTI_NOISE)     else
-            white_noise     when (sel = WHITE_NOISE)    else
+    dout <= anti_noise      when (sel = ANTI_N)     else
+            white_noise     when (sel = WHITE_N)    else
             err_noise_concat         when (sel = ERR_MIC)       else
             ref_noise_concat         when (sel = REF_MIC)       else
             alt;

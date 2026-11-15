@@ -19,8 +19,8 @@ package constants is
     subtype t_axi_word   is std_logic_vector(DATA_WIDTH - 1 downto 0);
     subtype t_i2s_sample is std_logic_vector(SAMPLE_WIDTH - 1 downto 0);
     constant NO_NOISE       : std_logic_vector(2 downto 0) := "000"; -- 0
-    constant ANTI_NOISE     : std_logic_vector(2 downto 0) := "001"; -- 1
-    constant WHITE_NOISE    : std_logic_vector(2 downto 0) := "010"; -- 2
+    constant ANTI_N         : std_logic_vector(2 downto 0) := "001"; -- 1
+    constant WHITE_N        : std_logic_vector(2 downto 0) := "010"; -- 2
     constant REF_MIC        : std_logic_vector(2 downto 0) := "011"; -- 3
     constant ERR_MIC        : std_logic_vector(2 downto 0) := "100"; -- 4
 end package;
