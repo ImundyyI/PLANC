@@ -141,6 +141,7 @@ xilinx.com:ip:zynq_ultra_ps_e:3.5\
 xilinx.com:ip:smartconnect:1.0\
 xilinx.com:ip:proc_sys_reset:5.0\
 xilinx.com:ip:xlconstant:1.1\
+xilinx.com:ip:ila:6.2\
 xilinx.com:ip:axi_dma:7.1\
 xilinx.com:ip:axi_gpio:2.0\
 "
@@ -647,28 +648,28 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   ] $zynq_ultra_ps_e_0
 
 
-  # Create instance: i2s_master, and set properties
+  # Create instance: i2s_master_new_0, and set properties
   set block_name i2s_master_new
-  set block_cell_name i2s_master
-  if { [catch {set i2s_master [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  set block_cell_name i2s_master_new_0
+  if { [catch {set i2s_master_new_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $i2s_master eq "" } {
+   } elseif { $i2s_master_new_0 eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
-  # Create instance: smartconnect, and set properties
-  set smartconnect [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect ]
-  set_property CONFIG.NUM_MI {5} $smartconnect
+  # Create instance: smartconnect_0, and set properties
+  set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
+  set_property CONFIG.NUM_MI {5} $smartconnect_0
 
 
-  # Create instance: reset, and set properties
-  set reset [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 reset ]
+  # Create instance: rst_ps8_0_99M, and set properties
+  set rst_ps8_0_99M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps8_0_99M ]
 
-  # Create instance: debug_to_0, and set properties
-  set debug_to_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 debug_to_0 ]
-  set_property CONFIG.CONST_VAL {0} $debug_to_0
+  # Create instance: xlconstant_0, and set properties
+  set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
+  set_property CONFIG.CONST_VAL {0} $xlconstant_0
 
 
   # Create instance: amp_i2s_tx_0, and set properties
@@ -682,107 +683,154 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
      return 1
    }
   
-  # Create instance: strobe_to_1, and set properties
-  set strobe_to_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 strobe_to_1 ]
+  # Create instance: xlconstant_1, and set properties
+  set xlconstant_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_1 ]
 
-  # Create instance: LSFR, and set properties
+  # Create instance: leap_forward_LFSR_0, and set properties
   set block_name leap_forward_LFSR
-  set block_cell_name LSFR
-  if { [catch {set LSFR [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  set block_cell_name leap_forward_LFSR_0
+  if { [catch {set leap_forward_LFSR_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $LSFR eq "" } {
+   } elseif { $leap_forward_LFSR_0 eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
-  # Create instance: audio_mux, and set properties
+  # Create instance: audio_mux_0, and set properties
   set block_name audio_mux
-  set block_cell_name audio_mux
-  if { [catch {set audio_mux [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  set block_cell_name audio_mux_0
+  if { [catch {set audio_mux_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $audio_mux eq "" } {
+   } elseif { $audio_mux_0 eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
-  # Create instance: err_adder, and set properties
+  # Create instance: SEL_CONST, and set properties
+  set SEL_CONST [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 SEL_CONST ]
+  set_property -dict [list \
+    CONFIG.CONST_VAL {3} \
+    CONFIG.CONST_WIDTH {3} \
+  ] $SEL_CONST
+
+
+  # Create instance: err_offset_remover, and set properties
   set block_name offset
-  set block_cell_name err_adder
-  if { [catch {set err_adder [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  set block_cell_name err_offset_remover
+  if { [catch {set err_offset_remover [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $err_adder eq "" } {
+   } elseif { $err_offset_remover eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
-  # Create instance: ref_adder, and set properties
+  # Create instance: offset_40k, and set properties
+  set offset_40k [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 offset_40k ]
+  set_property -dict [list \
+    CONFIG.CONST_VAL {1166430} \
+    CONFIG.CONST_WIDTH {32} \
+  ] $offset_40k
+
+
+  # Create instance: ref_offset_remover, and set properties
   set block_name offset
-  set block_cell_name ref_adder
-  if { [catch {set ref_adder [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  set block_cell_name ref_offset_remover
+  if { [catch {set ref_offset_remover [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $ref_adder eq "" } {
+   } elseif { $ref_offset_remover eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
-  # Create instance: err_audio_pipeline, and set properties
+  # Create instance: offset_60k, and set properties
+  set offset_60k [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 offset_60k ]
+  set_property -dict [list \
+    CONFIG.CONST_VAL {804550} \
+    CONFIG.CONST_WIDTH {32} \
+  ] $offset_60k
+
+
+  # Create instance: ila_0, and set properties
+  set ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_0 ]
+  set_property -dict [list \
+    CONFIG.C_DATA_DEPTH {16384} \
+    CONFIG.C_MONITOR_TYPE {Native} \
+    CONFIG.C_NUM_OF_PROBES {8} \
+    CONFIG.C_PROBE0_WIDTH {32} \
+    CONFIG.C_PROBE1_WIDTH {32} \
+    CONFIG.C_PROBE2_WIDTH {32} \
+    CONFIG.C_PROBE3_WIDTH {1} \
+    CONFIG.C_PROBE6_WIDTH {32} \
+    CONFIG.C_PROBE7_WIDTH {3} \
+  ] $ila_0
+
+
+  # Create instance: audio_pipeline_new_1, and set properties
   set block_name audio_pipeline_new
-  set block_cell_name err_audio_pipeline
-  if { [catch {set err_audio_pipeline [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  set block_cell_name audio_pipeline_new_1
+  if { [catch {set audio_pipeline_new_1 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $err_audio_pipeline eq "" } {
+   } elseif { $audio_pipeline_new_1 eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
-  # Create instance: err_axi_dma, and set properties
-  set err_axi_dma [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 err_axi_dma ]
+  # Create instance: axi_dma_0, and set properties
+  set axi_dma_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_0 ]
   set_property -dict [list \
     CONFIG.c_include_mm2s {0} \
     CONFIG.c_include_sg {0} \
     CONFIG.c_s2mm_burst_size {256} \
-  ] $err_axi_dma
+  ] $axi_dma_0
 
 
-  # Create instance: ref_audio_pipeline, and set properties
+  # Create instance: audio_pipeline_new_0, and set properties
   set block_name audio_pipeline_new
-  set block_cell_name ref_audio_pipeline
-  if { [catch {set ref_audio_pipeline [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  set block_cell_name audio_pipeline_new_0
+  if { [catch {set audio_pipeline_new_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $ref_audio_pipeline eq "" } {
+   } elseif { $audio_pipeline_new_0 eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
-  # Create instance: ref_axi_dma, and set properties
-  set ref_axi_dma [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 ref_axi_dma ]
+  # Create instance: axi_dma_1, and set properties
+  set axi_dma_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_1 ]
   set_property -dict [list \
     CONFIG.c_include_mm2s {0} \
     CONFIG.c_include_sg {0} \
     CONFIG.c_s2mm_burst_size {256} \
-  ] $ref_axi_dma
+  ] $axi_dma_1
 
 
-  # Create instance: test_constant, and set properties
-  set test_constant [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 test_constant ]
+  # Create instance: xlconstant_2, and set properties
+  set xlconstant_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_2 ]
   set_property -dict [list \
     CONFIG.CONST_VAL {67} \
     CONFIG.CONST_WIDTH {32} \
-  ] $test_constant
+  ] $xlconstant_2
 
 
-  # Create instance: sel_gpio, and set properties
-  set sel_gpio [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 sel_gpio ]
+  # Create instance: offset_0, and set properties
+  set offset_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 offset_0 ]
+  set_property -dict [list \
+    CONFIG.CONST_VAL {0} \
+    CONFIG.CONST_WIDTH {32} \
+  ] $offset_0
+
+
+  # Create instance: axi_gpio_0, and set properties
+  set axi_gpio_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 axi_gpio_0 ]
   set_property -dict [list \
     CONFIG.C_ALL_OUTPUTS {1} \
     CONFIG.C_GPIO_WIDTH {3} \
-  ] $sel_gpio
+  ] $axi_gpio_0
 
 
   # Create instance: err_gpio, and set properties
@@ -795,73 +843,73 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   set_property CONFIG.C_ALL_OUTPUTS {1} $ref_gpio
 
 
-  # Create instance: ANC, and set properties
+  # Create instance: ctrl_wrapper_0, and set properties
   set block_name ctrl_wrapper
-  set block_cell_name ANC
-  if { [catch {set ANC [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  set block_cell_name ctrl_wrapper_0
+  if { [catch {set ctrl_wrapper_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $ANC eq "" } {
+   } elseif { $ctrl_wrapper_0 eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
   # Create interface connections
-  connect_bd_intf_net -intf_net audio_pipeline_new_0_axis [get_bd_intf_pins ref_audio_pipeline/axis] [get_bd_intf_pins ref_axi_dma/S_AXIS_S2MM]
-  connect_bd_intf_net -intf_net audio_pipeline_new_1_axis [get_bd_intf_pins err_audio_pipeline/axis] [get_bd_intf_pins err_axi_dma/S_AXIS_S2MM]
-  connect_bd_intf_net -intf_net err_pipeline_M_AXI_S2MM [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HPC0_FPD] [get_bd_intf_pins err_axi_dma/M_AXI_S2MM]
-  connect_bd_intf_net -intf_net ref_pipeline_M_AXI_S2MM [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HPC1_FPD] [get_bd_intf_pins ref_axi_dma/M_AXI_S2MM]
-  connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect/M00_AXI] [get_bd_intf_pins err_axi_dma/S_AXI_LITE]
-  connect_bd_intf_net -intf_net smartconnect_0_M01_AXI [get_bd_intf_pins smartconnect/M01_AXI] [get_bd_intf_pins ref_axi_dma/S_AXI_LITE]
-  connect_bd_intf_net -intf_net smartconnect_0_M02_AXI [get_bd_intf_pins smartconnect/M02_AXI] [get_bd_intf_pins sel_gpio/S_AXI]
-  connect_bd_intf_net -intf_net smartconnect_0_M03_AXI [get_bd_intf_pins smartconnect/M03_AXI] [get_bd_intf_pins err_gpio/S_AXI]
-  connect_bd_intf_net -intf_net smartconnect_0_M04_AXI [get_bd_intf_pins smartconnect/M04_AXI] [get_bd_intf_pins ref_gpio/S_AXI]
-  connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM0_FPD [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] [get_bd_intf_pins smartconnect/S00_AXI]
-  connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM1_FPD [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM1_FPD] [get_bd_intf_pins smartconnect/S01_AXI]
+  connect_bd_intf_net -intf_net audio_pipeline_new_0_axis [get_bd_intf_pins audio_pipeline_new_0/axis] [get_bd_intf_pins axi_dma_1/S_AXIS_S2MM]
+  connect_bd_intf_net -intf_net audio_pipeline_new_1_axis [get_bd_intf_pins audio_pipeline_new_1/axis] [get_bd_intf_pins axi_dma_0/S_AXIS_S2MM]
+  connect_bd_intf_net -intf_net err_pipeline_M_AXI_S2MM [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HPC0_FPD] [get_bd_intf_pins axi_dma_0/M_AXI_S2MM]
+  connect_bd_intf_net -intf_net ref_pipeline_M_AXI_S2MM [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HPC1_FPD] [get_bd_intf_pins axi_dma_1/M_AXI_S2MM]
+  connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins axi_dma_0/S_AXI_LITE]
+  connect_bd_intf_net -intf_net smartconnect_0_M01_AXI [get_bd_intf_pins smartconnect_0/M01_AXI] [get_bd_intf_pins axi_dma_1/S_AXI_LITE]
+  connect_bd_intf_net -intf_net smartconnect_0_M02_AXI [get_bd_intf_pins smartconnect_0/M02_AXI] [get_bd_intf_pins axi_gpio_0/S_AXI]
+  connect_bd_intf_net -intf_net smartconnect_0_M03_AXI [get_bd_intf_pins smartconnect_0/M03_AXI] [get_bd_intf_pins err_gpio/S_AXI]
+  connect_bd_intf_net -intf_net smartconnect_0_M04_AXI [get_bd_intf_pins smartconnect_0/M04_AXI] [get_bd_intf_pins ref_gpio/S_AXI]
+  connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM0_FPD [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] [get_bd_intf_pins smartconnect_0/S00_AXI]
+  connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM1_FPD [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM1_FPD] [get_bd_intf_pins smartconnect_0/S01_AXI]
 
   # Create port connections
   connect_bd_net -net amp_i2s_tx_0_amp_din [get_bd_pins amp_i2s_tx_0/amp_din] [get_bd_ports pmod_amp_din]
-  connect_bd_net -net audio_mux_0_dout [get_bd_pins audio_mux/dout] [get_bd_pins amp_i2s_tx_0/din]
-  connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins ref_audio_pipeline/fifo_full] [get_bd_pins i2s_master/ref_full]
-  connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins err_audio_pipeline/fifo_full] [get_bd_pins i2s_master/err_full]
-  connect_bd_net -net axi_gpio_0_gpio_io_o [get_bd_pins sel_gpio/gpio_io_o] [get_bd_pins audio_mux/sel]
-  connect_bd_net -net axi_gpio_1_gpio_io_o [get_bd_pins err_gpio/gpio_io_o] [get_bd_pins err_adder/offset]
-  connect_bd_net -net axi_gpio_1_gpio_io_o1 [get_bd_pins ref_gpio/gpio_io_o] [get_bd_pins ref_adder/offset]
-  connect_bd_net -net ctrl_wrapper_0_audio_out [get_bd_pins ANC/audio_out] [get_bd_pins audio_mux/anti_noise]
-  connect_bd_net -net i2s_master_new_0_err_din [get_bd_pins i2s_master/err_din] [get_bd_pins err_adder/din]
-  connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins i2s_master/err_w_stb] [get_bd_pins LSFR/step] [get_bd_pins err_audio_pipeline/fifo_wr] [get_bd_pins ANC/err_push]
-  connect_bd_net -net i2s_master_new_0_i2s_bclk [get_bd_pins i2s_master/i2s_bclk] [get_bd_pins amp_i2s_tx_0/i2s_bclk] [get_bd_ports pmod_bclk]
-  connect_bd_net -net i2s_master_new_0_i2s_lrcl [get_bd_pins i2s_master/i2s_lrcl] [get_bd_pins amp_i2s_tx_0/i2s_lrcl] [get_bd_ports pmod_lrcl]
-  connect_bd_net -net i2s_master_new_0_ref_din [get_bd_pins i2s_master/ref_din] [get_bd_pins ref_adder/din]
-  connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins i2s_master/ref_w_stb] [get_bd_pins ref_audio_pipeline/fifo_wr] [get_bd_pins ANC/ref_push]
-  connect_bd_net -net leap_forward_LFSR_0_dout [get_bd_pins LSFR/dout] [get_bd_pins audio_mux/white_noise]
-  connect_bd_net -net offset_0_dout [get_bd_pins err_adder/dout] [get_bd_pins LSFR/err_din] [get_bd_pins err_audio_pipeline/fifo_din] [get_bd_pins audio_mux/err_din] [get_bd_pins ANC/err_din]
-  connect_bd_net -net pmod_err_dout_1 [get_bd_ports pmod_err_dout] [get_bd_pins i2s_master/i2s_err_dout]
-  connect_bd_net -net pmod_ref_dout_1 [get_bd_ports pmod_ref_dout] [get_bd_pins i2s_master/i2s_ref_dout]
-  connect_bd_net -net ref_offset_remover_dout [get_bd_pins ref_adder/dout] [get_bd_pins ref_audio_pipeline/fifo_din] [get_bd_pins audio_mux/ref_din] [get_bd_pins ANC/ref_din]
-  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins reset/peripheral_aresetn] [get_bd_pins err_axi_dma/axi_resetn] [get_bd_pins ref_axi_dma/axi_resetn] [get_bd_pins ref_audio_pipeline/reset] [get_bd_pins err_audio_pipeline/reset] [get_bd_pins sel_gpio/s_axi_aresetn] [get_bd_pins err_gpio/s_axi_aresetn] [get_bd_pins ref_gpio/s_axi_aresetn] [get_bd_pins ANC/reset]
-  connect_bd_net -net xlconstant_0_dout [get_bd_pins debug_to_0/dout] [get_bd_pins i2s_master/debug]
-  connect_bd_net -net xlconstant_1_dout [get_bd_pins strobe_to_1/dout] [get_bd_pins amp_i2s_tx_0/din_stb]
-  connect_bd_net -net xlconstant_2_dout1 [get_bd_pins test_constant/dout] [get_bd_pins audio_mux/alt]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins reset/slowest_sync_clk] [get_bd_pins smartconnect/aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins amp_i2s_tx_0/clk] [get_bd_pins LSFR/clk] [get_bd_pins err_axi_dma/m_axi_s2mm_aclk] [get_bd_pins err_axi_dma/s_axi_lite_aclk] [get_bd_pins ref_axi_dma/m_axi_s2mm_aclk] [get_bd_pins ref_axi_dma/s_axi_lite_aclk] [get_bd_pins ref_audio_pipeline/clk] [get_bd_pins err_audio_pipeline/clk] [get_bd_pins i2s_master/clk] [get_bd_pins sel_gpio/s_axi_aclk] [get_bd_pins err_gpio/s_axi_aclk] [get_bd_pins ref_gpio/s_axi_aclk] [get_bd_pins ANC/clk]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins reset/ext_reset_in]
+  connect_bd_net -net audio_mux_0_dout [get_bd_pins audio_mux_0/dout] [get_bd_pins amp_i2s_tx_0/din] [get_bd_pins ila_0/probe0]
+  connect_bd_net -net audio_pipeline_new_0_fifo_full [get_bd_pins audio_pipeline_new_0/fifo_full] [get_bd_pins i2s_master_new_0/ref_full]
+  connect_bd_net -net audio_pipeline_new_1_fifo_full [get_bd_pins audio_pipeline_new_1/fifo_full] [get_bd_pins i2s_master_new_0/err_full] [get_bd_pins ila_0/probe3]
+  connect_bd_net -net axi_gpio_0_gpio_io_o [get_bd_pins axi_gpio_0/gpio_io_o] [get_bd_pins ila_0/probe7] [get_bd_pins audio_mux_0/sel]
+  connect_bd_net -net axi_gpio_1_gpio_io_o [get_bd_pins err_gpio/gpio_io_o] [get_bd_pins err_offset_remover/offset]
+  connect_bd_net -net axi_gpio_1_gpio_io_o1 [get_bd_pins ref_gpio/gpio_io_o] [get_bd_pins ref_offset_remover/offset]
+  connect_bd_net -net ctrl_wrapper_0_audio_out [get_bd_pins ctrl_wrapper_0/audio_out] [get_bd_pins ila_0/probe6] [get_bd_pins audio_mux_0/anti_noise]
+  connect_bd_net -net i2s_master_new_0_err_din [get_bd_pins i2s_master_new_0/err_din] [get_bd_pins err_offset_remover/din]
+  connect_bd_net -net i2s_master_new_0_err_w_stb [get_bd_pins i2s_master_new_0/err_w_stb] [get_bd_pins leap_forward_LFSR_0/step] [get_bd_pins audio_pipeline_new_1/fifo_wr] [get_bd_pins ctrl_wrapper_0/err_push]
+  connect_bd_net -net i2s_master_new_0_i2s_bclk [get_bd_pins i2s_master_new_0/i2s_bclk] [get_bd_pins amp_i2s_tx_0/i2s_bclk] [get_bd_ports pmod_bclk] [get_bd_pins ila_0/probe4]
+  connect_bd_net -net i2s_master_new_0_i2s_lrcl [get_bd_pins i2s_master_new_0/i2s_lrcl] [get_bd_pins amp_i2s_tx_0/i2s_lrcl] [get_bd_ports pmod_lrcl] [get_bd_pins ila_0/probe5]
+  connect_bd_net -net i2s_master_new_0_ref_din [get_bd_pins i2s_master_new_0/ref_din] [get_bd_pins ref_offset_remover/din]
+  connect_bd_net -net i2s_master_new_0_ref_w_stb [get_bd_pins i2s_master_new_0/ref_w_stb] [get_bd_pins audio_pipeline_new_0/fifo_wr] [get_bd_pins ctrl_wrapper_0/ref_push]
+  connect_bd_net -net leap_forward_LFSR_0_dout [get_bd_pins leap_forward_LFSR_0/dout] [get_bd_pins audio_mux_0/white_noise]
+  connect_bd_net -net offset_0_dout [get_bd_pins err_offset_remover/dout] [get_bd_pins leap_forward_LFSR_0/err_din] [get_bd_pins audio_pipeline_new_1/fifo_din] [get_bd_pins ila_0/probe2] [get_bd_pins audio_mux_0/err_din] [get_bd_pins ctrl_wrapper_0/err_din]
+  connect_bd_net -net pmod_err_dout_1 [get_bd_ports pmod_err_dout] [get_bd_pins i2s_master_new_0/i2s_err_dout]
+  connect_bd_net -net pmod_ref_dout_1 [get_bd_ports pmod_ref_dout] [get_bd_pins i2s_master_new_0/i2s_ref_dout]
+  connect_bd_net -net ref_offset_remover_dout [get_bd_pins ref_offset_remover/dout] [get_bd_pins audio_pipeline_new_0/fifo_din] [get_bd_pins ila_0/probe1] [get_bd_pins audio_mux_0/ref_din] [get_bd_pins ctrl_wrapper_0/ref_din]
+  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_pins axi_dma_0/axi_resetn] [get_bd_pins axi_dma_1/axi_resetn] [get_bd_pins audio_pipeline_new_0/reset] [get_bd_pins audio_pipeline_new_1/reset] [get_bd_pins axi_gpio_0/s_axi_aresetn] [get_bd_pins err_gpio/s_axi_aresetn] [get_bd_pins ref_gpio/s_axi_aresetn] [get_bd_pins ctrl_wrapper_0/reset]
+  connect_bd_net -net xlconstant_0_dout [get_bd_pins xlconstant_0/dout] [get_bd_pins i2s_master_new_0/debug]
+  connect_bd_net -net xlconstant_1_dout [get_bd_pins xlconstant_1/dout] [get_bd_pins amp_i2s_tx_0/din_stb]
+  connect_bd_net -net xlconstant_2_dout1 [get_bd_pins xlconstant_2/dout] [get_bd_pins audio_mux_0/alt]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins amp_i2s_tx_0/clk] [get_bd_pins leap_forward_LFSR_0/clk] [get_bd_pins ila_0/clk] [get_bd_pins axi_dma_0/m_axi_s2mm_aclk] [get_bd_pins axi_dma_0/s_axi_lite_aclk] [get_bd_pins axi_dma_1/m_axi_s2mm_aclk] [get_bd_pins axi_dma_1/s_axi_lite_aclk] [get_bd_pins audio_pipeline_new_0/clk] [get_bd_pins audio_pipeline_new_1/clk] [get_bd_pins i2s_master_new_0/clk] [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins err_gpio/s_axi_aclk] [get_bd_pins ref_gpio/s_axi_aclk] [get_bd_pins ctrl_wrapper_0/clk]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins rst_ps8_0_99M/ext_reset_in]
 
   # Create address segments
-  assign_bd_address -offset 0xA0000000 -range 0x00010000 -with_name SEG_axi_dma_0_Reg -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs err_axi_dma/S_AXI_LITE/Reg] -force
-  assign_bd_address -offset 0xA0010000 -range 0x00010000 -with_name SEG_axi_dma_1_Reg -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs ref_axi_dma/S_AXI_LITE/Reg] -force
-  assign_bd_address -offset 0xA0020000 -range 0x00010000 -with_name SEG_axi_gpio_0_Reg -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs sel_gpio/S_AXI/Reg] -force
+  assign_bd_address -offset 0xA0000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_dma_0/S_AXI_LITE/Reg] -force
+  assign_bd_address -offset 0xA0010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_dma_1/S_AXI_LITE/Reg] -force
+  assign_bd_address -offset 0xA0020000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] -force
   assign_bd_address -offset 0xA0030000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs err_gpio/S_AXI/Reg] -force
   assign_bd_address -offset 0xA0040000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs ref_gpio/S_AXI/Reg] -force
-  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces err_axi_dma/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_LOW] -force
-  assign_bd_address -offset 0xC0000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces err_axi_dma/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_QSPI] -force
-  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces ref_axi_dma/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_DDR_LOW] -force
-  assign_bd_address -offset 0xC0000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces ref_axi_dma/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_QSPI] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_LOW] -force
+  assign_bd_address -offset 0xC0000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_QSPI] -force
+  assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_DDR_LOW] -force
+  assign_bd_address -offset 0xC0000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_QSPI] -force
 
   # Exclude Address Segments
-  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces err_axi_dma/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_HIGH]
-  exclude_bd_addr_seg -offset 0xFF000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces err_axi_dma/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_LPS_OCM]
-  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces ref_axi_dma/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_DDR_HIGH]
-  exclude_bd_addr_seg -offset 0xFF000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces ref_axi_dma/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_LPS_OCM]
+  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_DDR_HIGH]
+  exclude_bd_addr_seg -offset 0xFF000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces axi_dma_0/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP0/HPC0_LPS_OCM]
+  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_DDR_HIGH]
+  exclude_bd_addr_seg -offset 0xFF000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces axi_dma_1/Data_S2MM] [get_bd_addr_segs zynq_ultra_ps_e_0/SAXIGP1/HPC1_LPS_OCM]
 
 
   # Restore current instance
