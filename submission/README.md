@@ -65,7 +65,7 @@ The project is structured as follows.
 
 ## PL
 
-The Vivado build, aswell as the custom constraints file. All PL source lives in `hw/`. The Vivado project itself is **not** included, as it is generated from these files by `create_project.tcl` (see **Building**).
+The Vivado build, aswell as the custom constraints file. All PL source lives in `hw/`. The Vivado project generated via `create_project.tcl` lives in `hw/build/vivado` (these directories will create when the script is run, see **Building**).
 
 ```
 hw/
@@ -73,14 +73,12 @@ hw/
 ├── bd/                       <- block design scripts (bd.tcl is the final one used)
 ├── ip/                       <- Xilinx IP (.xci) imported by create_project.tcl (multipliers)
 ├── modules/                  <- all hand-written VHDL source for the PL
-├── tests/
-│   ├── vivado_tb/            <- Vivado testbenches
-│   └── cocotb/               <- cocotb (Python) testbenches
 ├── constraints/               <- constraints files (.xdc)
 └── build/vivado/             <- GENERATED Vivado project (created by create_project.tcl)
 ```
 
 ### Constraints
+
 
 | Signal | PMOD pin | FPGA pin |
 |---|---|---|
@@ -188,9 +186,8 @@ The script:
 3. imports and generates the multiplier IP from `hw/ip/` (`mult_gen_0`, `mult_gen_1`).
 4. rebuilds the block design from `hw/bd/bd.tcl`.
 
-> Note that the HDL Wrapper must be created on the `active_noise_cancelling.bd` in the hierarchy and set as the top-level entity. `ctrl_wrapper.vhd` starts as the top-level entity. 
+> Note that the HDL Wrapper must be created on the `active_noise_cancelling.bd` in the hierarchy and set as the top-level entity. `ctrl_wrapper.vhd` starts as the top-level entity by default and needs to be changed. 
 
->Make sure that `create_project.tcl` is in the same directory as `bd/`
 
 # Running, Testing, Verifying
 

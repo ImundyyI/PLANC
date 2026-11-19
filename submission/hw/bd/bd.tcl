@@ -1,6 +1,6 @@
 
 ################################################################
-# This is a generated script based on design: simple_project_bd
+# This is a generated script based on design: active_noise_cancelling
 #
 # Though there are limitations about the generated script,
 # the main purpose of this utility is to make learning
@@ -41,7 +41,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 ################################################################
 
 # To test this script, run the following commands from Vivado Tcl console:
-# source simple_project_bd_script.tcl
+# source active_noise_cancelling_script.tcl
 
 
 # The design that will be created by this Tcl script contains the following 
@@ -666,11 +666,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Create instance: reset, and set properties
   set reset [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 reset ]
 
-  # Create instance: debug_to_0, and set properties
-  set debug_to_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 debug_to_0 ]
-  set_property CONFIG.CONST_VAL {0} $debug_to_0
-
-
   # Create instance: amp_i2s_tx_0, and set properties
   set block_name amp_i2s_tx
   set block_cell_name amp_i2s_tx_0
@@ -840,7 +835,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net pmod_ref_dout_1 [get_bd_ports pmod_ref_dout] [get_bd_pins i2s_master/i2s_ref_dout]
   connect_bd_net -net ref_offset_remover_dout [get_bd_pins ref_adder/dout] [get_bd_pins ref_audio_pipeline/fifo_din] [get_bd_pins audio_mux/ref_din] [get_bd_pins ANC/ref_din]
   connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins reset/peripheral_aresetn] [get_bd_pins err_axi_dma/axi_resetn] [get_bd_pins ref_axi_dma/axi_resetn] [get_bd_pins ref_audio_pipeline/reset] [get_bd_pins err_audio_pipeline/reset] [get_bd_pins sel_gpio/s_axi_aresetn] [get_bd_pins err_gpio/s_axi_aresetn] [get_bd_pins ref_gpio/s_axi_aresetn] [get_bd_pins ANC/reset]
-  connect_bd_net -net xlconstant_0_dout [get_bd_pins debug_to_0/dout] [get_bd_pins i2s_master/debug]
   connect_bd_net -net xlconstant_1_dout [get_bd_pins strobe_to_1/dout] [get_bd_pins amp_i2s_tx_0/din_stb]
   connect_bd_net -net xlconstant_2_dout1 [get_bd_pins test_constant/dout] [get_bd_pins audio_mux/alt]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins reset/slowest_sync_clk] [get_bd_pins smartconnect/aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihpc1_fpd_aclk] [get_bd_pins amp_i2s_tx_0/clk] [get_bd_pins LSFR/clk] [get_bd_pins err_axi_dma/m_axi_s2mm_aclk] [get_bd_pins err_axi_dma/s_axi_lite_aclk] [get_bd_pins ref_axi_dma/m_axi_s2mm_aclk] [get_bd_pins ref_axi_dma/s_axi_lite_aclk] [get_bd_pins ref_audio_pipeline/clk] [get_bd_pins err_audio_pipeline/clk] [get_bd_pins i2s_master/clk] [get_bd_pins sel_gpio/s_axi_aclk] [get_bd_pins err_gpio/s_axi_aclk] [get_bd_pins ref_gpio/s_axi_aclk] [get_bd_pins ANC/clk]
@@ -867,7 +861,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -879,4 +872,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
 create_root_design ""
 
+
+common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 

@@ -9,7 +9,6 @@ use work.constants.all;
 entity i2s_master_new is
     port (
         clk             : in std_logic;
-        debug           : in std_logic;
         ref_full        : in std_logic;
         err_full        : in std_logic;
 
@@ -22,8 +21,7 @@ entity i2s_master_new is
         i2s_ref_dout    : in std_logic;
         i2s_err_dout    : in std_logic;
         i2s_bclk        : out std_logic;
-        i2s_lrcl        : out std_logic;
-        i2s_count       : out std_logic_vector(4 downto 0)
+        i2s_lrcl        : out std_logic
     );
 end entity;
 
@@ -48,8 +46,6 @@ architecture Behavioral of i2s_master_new is
     signal ref_shift_data_xtend : t_fifo_word;
 
 
-    -- runs a counter that mimics a ramp signal.
-    signal debug_cnt : unsigned(15 downto 0) := (Others => '0');
 
 begin
     i2s_bclk <= bclk;
@@ -104,14 +100,8 @@ begin
                     if (ws = '0') then
                         err_push <= '1';
                         ref_push <= '1';
-                        -- TODO: remove when project is confifmed donep ls.
-                        if (debug = '1') then
-                            err_din <= X"0000" & std_logic_vector(debug_cnt);
-                            ref_din <= X"0000" & std_logic_vector(debug_cnt);
-                        else
-                            err_din <= err_shift_data_xtend;
-                            ref_din <= ref_shift_data_xtend;
-                        end if;
+                        err_din <= err_shift_data_xtend;
+                        ref_din <= ref_shift_data_xtend;
                     end if;
                 -- when we get to the last BCLk, clear vector so
                 -- we cna shift the next samples bits in.
@@ -122,20 +112,7 @@ begin
             end if;
         end if;
     end process;
-    -- TODO: remove this. it is only useful for debugging stuf.
-    COUNTER : process (clk) 
-    begin
-        if (rising_edge(clk)) then
-            if (err_push = '1' or ref_push = '1') then 
-                if (debug_cnt >= 15000) then
-                    debug_cnt <= (Others => '0');
-                else 
-                    debug_cnt <= debug_cnt + 180; 
-                end if;
-                
-            end if; 
-        end if;
-    end process;
+
     -- activate write strobe if the FIFOs are not full AND we have a valid sample.
     err_w_stb <= err_push;
     ref_w_stb <= ref_push;
@@ -143,8 +120,5 @@ begin
     -- shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => shift_data(23)) & shift_data;
     err_shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => err_shift_data(23)) & err_shift_data;
     ref_shift_data_xtend <= (DATA_WIDTH - 1 downto 24 => ref_shift_data(23)) & ref_shift_data;
---    err_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
---    ref_din <= shift_data_xtend when (debug = '0') else std_logic_vector(debug_cnt);
-    i2s_count <= std_logic_vector(bit_count);
 end Behavioral;
 

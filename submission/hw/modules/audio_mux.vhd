@@ -22,10 +22,11 @@ architecture Behavioral of audio_mux is
     signal err_noise_concat : std_logic_vector(31 downto 0);
     signal ref_noise_concat : std_logic_vector(31 downto 0);
 begin
-    -- incase we need to scale down output.
+    -- This scales down the err_noise and ref_noise values, by default they start to saturate
+    -- the speaker output and sound bad.
     err_noise_concat <= std_logic_vector(shift_right(signed(err_din), 1));
     ref_noise_concat <= std_logic_vector(shift_right(signed(ref_din), 1));
-    
+    -- MUX to select output. dout wires directly to amp_i2s_tx.
     dout <= anti_noise      when (sel = ANTI_N)     else
             white_noise     when (sel = WHITE_N)    else
             err_noise_concat         when (sel = ERR_MIC)       else
