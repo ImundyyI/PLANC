@@ -70,14 +70,13 @@ The Vivado build, aswell as the custom constraints file. All PL source lives in 
 ```
 hw/
 ├── create_project.tcl        <- rebuilds the whole Vivado project from source
-├── simple_project_bd.pdf     <- printout of the block design
 ├── bd/                       <- block design scripts (bd.tcl is the final one used)
 ├── ip/                       <- Xilinx IP (.xci) imported by create_project.tcl (multipliers)
 ├── modules/                  <- all hand-written VHDL source for the PL
 ├── tests/
 │   ├── vivado_tb/            <- Vivado testbenches
 │   └── cocotb/               <- cocotb (Python) testbenches
-├── constraint/               <- constraints files (.xdc)
+├── constraints/               <- constraints files (.xdc)
 └── build/vivado/             <- GENERATED Vivado project (created by create_project.tcl)
 ```
 
@@ -94,7 +93,7 @@ hw/
 
 ### Block Design
 
-`bd.tcl` contains the block diagram `simple_project_bd` used in . The main blocks are:
+`bd.tcl` contains the block diagram `active_noise_cancelling.bd` used in the Vivado project. The main blocks are:
 
 | Block (instance name) | Type | Purpose |
 |---|---|---|
@@ -168,16 +167,24 @@ MUX select values (from `constants.vhd`) used to drive the speaker output:
 ### Requirements
 - **Vivado 2024.1**
 
-### 1. Open or create the Vivado project
+### 1. Using Archive
+
+An archive has been placed in the .zip root if you wish to use the vivado project archive directly, also incase `create_project.tcl` fails. *Vivado's default hierarchy is cluttered, it is easier to understand the hierarchy if you look in `hw/` and build using the **instructions below**.*
+
+### 2. Building from Source
 
 **Recreate it from source** In Vivado, either:
-- **Tools → Run Tcl Script** and select `hw/create_project.tcl`
+- **Tools → Run Tcl Script** and select `hw/create_project.tcl`.
 
 The script:
-1. creates the project `anc` in `hw/build/vivado/`
-2. adds every `.vhd` in `hw/modules/`, the constraints in `hw/vivado/`, and the testbenches in `hw/tests/vivado_tb/`
-3. imports and generates the multiplier IP from `hw/ip/` (`mult_gen_0`, `mult_gen_1`)
-4. rebuilds the block design from `hw/bd/bd.tcl`, creates its HDL wrapper and sets `simple_project_bd_wrapper` as top
+1. creates the project `anc` in `hw/build/vivado/`.
+2. adds every `.vhd` in `hw/modules/` and the `kria-constraints-custom.xdc` constraints in `hw/constraints`.
+3. imports and generates the multiplier IP from `hw/ip/` (`mult_gen_0`, `mult_gen_1`).
+4. rebuilds the block design from `hw/bd/bd.tcl`.
+
+> Note that the HDL Wrapper must be created on the `active_noise_cancelling.bd` in the hierarchy and set as the top-level entity. `ctrl_wrapper.vhd` starts as the top-level entity. 
+
+>Make sure that `create_project.tcl` is in the same directory as `bd/`
 
 # Testing and Verifying
 
