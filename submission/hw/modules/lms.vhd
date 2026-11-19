@@ -16,7 +16,8 @@ entity lms is
         
         fx_en_shift : in std_logic;
         fx_en_weight : in std_logic;
-
+        
+        -- signal for weights have been calculated, not stored in weight registers yet
         lms_done : out std_logic;
         weights_out : out std_logic_vector(TAPS*OUT_BITS-1 downto 0)
     );
@@ -30,11 +31,13 @@ architecture Behavioral of lms is
 
     signal shift_arr : shift_arr_t := (others => (others => '0'));
     signal prod_arr : prod_arr_t := (others => (others => '0'));
+    
     signal weight_arr : weight_arr_t := (others => (others => '0'));
 
     signal done1 : std_logic := '0';
     signal done2 : std_logic := '0';
-
+    
+    -- step size must match 36 - OUT_BITS
     constant step_size : integer := 10;
 begin
 
@@ -51,7 +54,7 @@ begin
                     end loop;
                 end if;
             end if;
-
+            
             for i in 0 to TAPS-1 loop
                 prod_arr(i) <= shift_arr(i) * signed(err);
             end loop;
@@ -67,6 +70,7 @@ begin
             else
                 if fx_en_weight = '1' then
                     for i in 0 to TAPS-1 loop
+                        -- w = (x' * e) >> step_size
                         shift_res := shift_right(prod_arr(i), step_size);
                         weight_arr(i) <= weight_arr(i) - resize(shift_res, OUT_BITS);
                     end loop;
@@ -74,7 +78,8 @@ begin
             end if;
         end if;
     end process;
-
+    
+    -- weights calculated 2 clock cycles after fx_en_shift is enabled
     process(clk)
     begin
         if rising_edge(clk) then

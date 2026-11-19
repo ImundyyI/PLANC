@@ -8,7 +8,6 @@ end entity;
 architecture sim of lms_tb is
     constant PERIOD : time := 10ns;
     constant TAPS : integer := 32;
-    constant STEP : integer := 8;
     constant num_bits_out : integer := 26;
 
     component lms is
@@ -66,19 +65,14 @@ begin
     w1 <= signed(weights_out(2*num_bits_out-1 downto num_bits_out));
     w2 <= signed(weights_out(3*num_bits_out-1 downto 2*num_bits_out));
     w3 <= signed(weights_out(4*num_bits_out-1 downto 3*num_bits_out));
-    
---    w0 <= signed(weights_out(31 downto 0));
---    w1 <= signed(weights_out(63 downto 32));
---    w2 <= signed(weights_out(95 downto 64));
---    w3 <= signed(weights_out(127 downto 96));
 
     main : process
     begin
         wait for 3*PERIOD;
         reset <= '1';
-
         wait for 3*PERIOD;
-
+        
+        -- sample 1     w0 = -1953
         est <= std_logic_vector(to_signed(1000, 18));
         err <= std_logic_vector(to_signed(2000, 18));
         wait for PERIOD;
@@ -87,7 +81,8 @@ begin
         wait for PERIOD;
         fx_en_shift <= '0';
         wait for 5*PERIOD;
-
+        
+        -- sample 2     w0 = -1464, w1 = -976
         est <= std_logic_vector(to_signed(-500, 18));
         err <= std_logic_vector(to_signed(1000, 18));
         wait for PERIOD;
@@ -96,7 +91,8 @@ begin
         wait for PERIOD;
         fx_en_shift <= '0';
         wait for 5*PERIOD;
-
+        
+        -- sample 3     w0 = -1346, w1 = -1171, w2 = 391
         est <= std_logic_vector(to_signed(300, 18));
         err <= std_logic_vector(to_signed(-400, 18));
         wait for PERIOD;
@@ -105,7 +101,6 @@ begin
         wait for PERIOD;
         fx_en_shift <= '0';
         wait for 5*PERIOD;
-
 
         wait;
     end process;

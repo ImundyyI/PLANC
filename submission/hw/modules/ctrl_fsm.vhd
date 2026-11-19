@@ -22,15 +22,15 @@ entity ctrl_fsm is
 end entity;
 
 architecture Behavioral of ctrl_fsm is
-    -- this needs to shift register input, and gate speaker register for when convolution finishes.
-    --it also needs to gate weight registers, and x' history registers in parallel.
+    -- IDLE: wait for microphone signals, then start FIRs
+    -- CALC_FIR: FIRs are active, enables output register when adaptive is done
+    -- WEIGHT_UPDATE: LMS is active, waits until done signal to enable weight register
     type t_state is (IDLE, CALC_FIR, WEIGHT_UPDATE);
 
     signal state        : t_state := IDLE;
     signal state_next   : t_state;
 begin
-    -- always immediately load these values into the shift register AND standalone error sample register.
-    -- s.t we dont waste any cycles.
+    -- enable history buffer register immediately so that no clock cycles are wasted
     reg_en <= err_push or ref_push;
 
     FSM_STATES : process (state, err_push, st_done, ada_done, lms_done)
@@ -51,6 +51,9 @@ begin
                 if ada_done = '1' then
                     out_en <= '1';
                 end if;
+                
+                -- static FIR always finishes after adaptive FIR
+                -- so wait until it's finished before moving to WEIGHT_UPDATE
                 if st_done = '1' then
                     fx_en_shift <= '1';
                     state_next <= WEIGHT_UPDATE;
@@ -65,16 +68,13 @@ begin
         end case;
     end process;
     
-    -- weight updates should finish immediately.
     -- FSM state register.
     FSM_REG : process (clk, reset)
     begin
         if (reset = '0') then
             state <= IDLE;
-        
         elsif (rising_edge(clk)) then
             state <= state_next;
-
         end if;
 
     end process;

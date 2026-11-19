@@ -42,9 +42,8 @@ entity adaptive_fir_filter is
         en      : in std_logic;
         done    : out std_logic;
         weights : in std_logic_vector(26*NUM_TAPS - 1 downto 0);
-        x       : in std_logic_vector(18 - 1 downto 0); -- Note: please check in the diagram whether x is meant to sample 32 or 64
+        x       : in std_logic_vector(18 - 1 downto 0);
         y       : out std_logic_vector(31 downto 0)
-        -- Note: I am aware the system is limited to 32 bits reads for the speaker
         -- Just for reference, sum of 32, 18 x 26 bit multiplications would require at most 49 bits (32 * (2^18 - 1)(2^26 -1) is our MAX)
         -- This means on average we want the weight values and what not to hopefully remain under 13 and 22 bits (although this is largely unexpected)
     );
@@ -63,8 +62,6 @@ architecture Behavioral of adaptive_fir_filter is
     END COMPONENT;
 
     type weights_sig_t is array (0 to NUM_TAPS - 1) of signed (25 downto 0);
-    -- type x_sig_t      is array (0 to NUM_TAPS - 1) of signed (17 downto 0);
-    -- type convol_mult_sig_t is array (0 to NUM_TAPS - 1) of signed (43 downto 0);
     constant MAX_VAL : signed(MAX_VAL_BITS - 1 downto 0) := resize(signed'(x"7FFFFFFF"), MAX_VAL_BITS);  -- +2^31 - 1
     constant MIN_VAL : signed(MAX_VAL_BITS - 1 downto 0) := resize(signed'(x"80000000"), MAX_VAL_BITS);  -- -2^31
     constant MULT_DELAY : integer := 3;
@@ -85,6 +82,7 @@ begin
     en_sig <= en;
     x_sig <= x;
     
+    -- wait an extra clock cycle to sync with history buffer
     process(clk)
     begin
         if rising_edge(clk) then 
@@ -97,9 +95,8 @@ begin
         weights_sig(i) <= signed(weights(26 * i + 25 downto 26 * i));
     end generate;
     
-    curr_weight <= std_logic_vector(weights_sig(weight_index));
+    curr_weight <= std_logic_vector(weights_sig(weight_index)); -- Current weight used in the calculation loop below
 
-    -- gen_convolv_mults: for i in 0 to NUM_TAPS - 1 generate
     dsp_slice_multiplier : mult_gen_1
     port map (
         CLK => clk,
@@ -108,17 +105,12 @@ begin
         CE => '1',   -- just have it always on, we don't count the garbage outputs anyways
         P => mult_sig
     );
-    -- end generate;
-
+    
     FIR_convolve : process (clk)
     begin
         if (rising_edge(clk)) then 
             done <= '0';
-            -- Weights is passed in already so multiply them and sum (NOTE will configure multiplier block soon)
-            --  for i in 0 to NUM_TAPS - 1 loop
-            --    sum := sum + resize(x_sig(NUM_TAPS - 1 - i) * weights_sig(i), 41); -- Allegedly multiplier block is used already in operand multipplication
-            -- end loop;
-            if wait1 = '1' then  -- We have 3 delay cycles so on the 
+            if wait1 = '1' then  -- reset sum and start convolving 1 clock cycle after en
                 sum <= (others => '0');
                 tap_count <= 0;
                 weight_index <= 0;
@@ -128,23 +120,15 @@ begin
                     weight_index <= 1;
                 end if;
             else
-                if (weight_index < NUM_TAPS - 1) then
+                if (weight_index < NUM_TAPS - 1) then -- Increase weight index till we reach 32
                     weight_index <= weight_index + 1;
                 end if;
 
                 if (tap_count >= MULT_DELAY AND tap_count < NUM_TAPS + MULT_DELAY) then
-                    sum <= sum + resize(signed(mult_sig), 49);
+                    sum <= sum + resize(signed(mult_sig), 49); -- Sum should accumulate for 3 to 35 (the first 3 cycles are a delay)
                 end if;
 
-                if tap_count = NUM_TAPS + MULT_DELAY then
---                    if (sum >= MAX_VAL) then
---                        y_sig <= std_logic_vector(MAX_VAL(31 downto 0));  -- If the sum is larger than 32 bit max we will just peak it
---                    elsif (sum <= MIN_VAL) then                           -- yes this will peak the speakers but we shouldn't see this happen too often
---                        y_sig <= std_logic_vector(MIN_VAL(31 downto 0));
---                    else
---                        y_sig <= std_logic_vector(sum(31 downto 0));
---                    end if;
-                    
+                if tap_count = NUM_TAPS + MULT_DELAY then                    
                     y_sig <= std_logic_vector(resize(shift_right(sum, 21), 32));
                     running <=  '0';
                     done <= '1';

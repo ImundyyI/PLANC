@@ -67,23 +67,27 @@ begin
     begin
         wait for 3*PERIOD;
         reset <= '1';
-
         wait for 10*PERIOD;
+        
+        -- move to CALC_FIR state
         err_push <= '1';
         wait for PERIOD;
         err_push <= '0';
         wait for 10*PERIOD;
         
+        -- doesnt change state
         ada_done <= '1';
         wait for PERIOD;
         ada_done <= '0';
         wait for 10*PERIOD;
 
+        -- move to WEIGHT_UPDATE state
         st_done <= '1';
         wait for PERIOD;
         st_done <= '0';
         wait for 10*PERIOD;
-
+        
+        -- move to IDLE state
         lms_done <= '1';
         wait for PERIOD;
         lms_done <= '0';
