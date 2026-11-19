@@ -35,11 +35,17 @@ A series of `.pdf` diagrams are located in `/diagrams`. These can be viewed at y
 
 ![alt text](images/external_circuit-1.png)
 
+The following diagram outlines how to connect each port on the KV260's PMOD port. 
+> Please note that pins 6, 7, 8 are unused.
+
+![alt text](images/port_diagram.png)
+
 ### Block Diagrams
 
 `simplified_block_diagram.pdf` Shows a high-level overview of each major component in the system, and connections between PS-PL.
 
 ![alt text](images/simplified_block_diagram-1.png)
+
 
 `full_block_diagram.pdf` shows a more in-depth overview of how the system and PL-PS interface works, modelling each module, major component, and its I/O ports. Some less-important modules such as **reset** have been omitted to reduce clutter.
 
@@ -88,7 +94,7 @@ hw/
 
 ### Block Design
 
-`bd.tcl` rebuilds the block design `simple_project_bd`. The main blocks are:
+`bd.tcl` contains the block diagram `simple_project_bd` used in . The main blocks are:
 
 | Block (instance name) | Type | Purpose |
 |---|---|---|
@@ -105,15 +111,6 @@ hw/
 | `err_axi_dma`, `ref_axi_dma` | AXI DMA (S2MM) | stream both mics to PS memory for graphing |
 | `smartconnect`, `reset` | AXI SmartConnect, Processor System Reset | AXI-Lite routing to the DMAs / GPIOs, synchronised reset |
 
-MUX select values (from `constants.vhd`):
-
-| `sel_gpio` value | Speaker plays |
-|---|---|
-| 0 (`NO_NOISE`) | nothing |
-| 1 (`ANTI_N`) | anti-noise from the control system |
-| 2 (`WHITE_N`) | white noise from the LFSR |
-| 3 (`REF_MIC`) | reference mic  |
-| 4 (`ERR_MIC`) | error mic  |
 
 ### Modules
 
@@ -141,6 +138,17 @@ MUX select values (from `constants.vhd`):
 |---|---|---|
 | `mult_gen_0` | Multiplier 12.0, signed 18 × 18, Use Mults (DSP48), 3 pipeline stages | `static_fir_filter` |
 | `mult_gen_1` | Multiplier 12.0, signed 18 × 26, Use Mults (DSP48), 3 pipeline stages | `adaptive_fir_filter` |
+
+### MUX Select
+MUX select values (from `constants.vhd`) used to drive the speaker output:
+
+| `sel_gpio` value | Speaker plays |
+|---|---|
+| 0 (`NO_NOISE`) | nothing |
+| 1 (`ANTI_N`) | anti-noise from the control system |
+| 2 (`WHITE_N`) | white noise from the LFSR |
+| 3 (`REF_MIC`) | reference mic  |
+| 4 (`ERR_MIC`) | error mic  |
 
 ## PS
 
