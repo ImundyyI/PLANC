@@ -12,7 +12,9 @@ We have prototyped an electronic ANC system that combines the best of these tech
 
 This has many use cases, including:
 - Cutting out interfering ambient noise from workplace meetings, office spaces, and classrooms to aid productivity and focus
+
 - Usage in homes and bedrooms to reduce outside noise (e.g on busy roads) and improve wellbeing
+
 - Improving accessibility for people with neurological disorders such as Autism Spectrum Disorder (ASD), ADHD, or sleep disorders, who struggle with sensory overload in noisy environments.
 
 ## Functional Summary
