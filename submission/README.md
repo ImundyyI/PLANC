@@ -4,11 +4,23 @@ This .md file provides documentation on how to use the .zip file, including file
 
 # Overview, Functionality
 
-> What is it?
+This project explores our implementation of Active Noise Cancellation (ANC) using a PVC pipe as an isolated accoustic environment. The system uses an upstream reference microphone, an error microphone and a speaker to create a general noise cancelling system.
 
-> Why did we do it (just copy from group plan)
+ANC is a technology proven to be useful in improving concentration, wellbeing and accessibility. Modern ANC technology is expensive and often restricted to devices such as headphones. Alternatively, passive noise cancellation can also be expensive and time consuming to deploy.
 
-> Current functionality summary ( good things 2 mention here might be like each major part, so AXI GPIO Offset Control, AXI GPIO MUX Control, Graphing, Control System, Simultaneous Sampling, etc)
+We have prototyped an electronic ANC system that combines the best of these technologies, with the aim of developing a solution for noise cancellation on a large scale, while remaining cheap and easy to set up.
+
+This has many use cases, including but not limited to:
+- Cutting out interfering ambient noise from workplace meetings, office spaces, and classrooms to aid productivity and focus
+- Usage in homes and bedrooms to reduce outside noise (e.g on busy roads) and improve wellbeing
+- Improving accessibility for people with neurological disorders such as Autism Spectrum Disorder (ASD), ADHD, or sleep disorders, who strugle with sensory overload in noisy environments.
+
+## functional summary
+The system is controlled in PS using AXI GPIO to change microphone DC offsets, and change the output of the speaker. The ANC algorithm uses Filtered-X Least Mean Square (FxLMS) to create the destructive wave. The algorithm is implemented entirely in PL.
+
+The reference and error microphone are sampled simultaneously using two audio pipelines are used, one for each of the reference and error mics. The audio pipelines are used to send the microphone samples to PS for graphing.
+
+The reference and error mic samples are supplied to the control system. The reference mic captures the incoming noise, and the error mic measures residual noise. Using these signals, the FxLMS algorithm updates its weights and calculates the resulting anti-noise signal. The calculated signal is sent to the speaker, producing a wave to destructively intefere with the incoming noise.
 
 # Diagrams
 
