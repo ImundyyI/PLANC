@@ -245,7 +245,7 @@ any spikes, unnatural clipping or peaking is odd behaviour:
 ![alt text](images/ambient_output.png)
 
 - With a 1 KHz tone:
-![alt text](images/1khz_output.png)
+![alt text](images/1kz_output.png)
 
 - In an "airplane noise" setting
 ![alt text](images/airplane_noise_output.png)
