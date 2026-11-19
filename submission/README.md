@@ -151,13 +151,36 @@ MUX select values (from `constants.vhd`) used to drive the speaker output:
 
 > Include `.bit`, `.hwh`, and jupyter notebook that is CLEAN (clear any output cells) in the directory.
 
+All PS is located in `sw/`
+
+```
+sw/
+├── active_noise_cancelling.bit        <- bit file for the entire ANC system
+├── active_noise_cancelling.hwh        <- hardware handoff to communicate with the PL
+├── anc_ps.ipynb                       <- Jupyter Notebook ipynb file that runs the system
+└── vivado_archive/                    <- Archived vivado project (contains the .xpr file)
+
+```
+
+The anc_ps notebook and the active_noise_cancelling files interact with PL via two DMA streams. One is for capturing
+the reference mic data and the other is for capturing the error mic data and both are graphed (orange = error mic, blue = ref mic).
+Requires matplotlib and pyplots to plot the output over time.
+
 
 
 # Dependencies
 
-> mention pip installing dependencies if needed
+The PYNQ requires the following packages to run:
 
-> look at dependencies in the PS code
+| Package | Purpose |
+|---|---|
+| `pynq` | Loads the overlay and controls the DMA and GPIO blocks |
+| `numpy` | Holds the sample buffers |
+| `matplotlib` | Draws the live error and reference plots |
+| `IPython` | Refreshes the plot inside Jupyter |
+| `scipy` | Saves the captured data to `plot_data.mat` |
+
+`pynq`, `numpy`, `matplotlib` and Jupyter come preinstalled on the standard PYNQ image. If you get an import error, install the missing package from a terminal on the board by running `pip install scipy`.
 
 # Building
 
@@ -191,24 +214,50 @@ The script:
 
 # Running, Testing, Verifying
 
-> It should be noted that the system can still be technically run via Jupyter Notebook without the external circuit, however it **will not work** and read garbage values on the PS.
+To run the system, import the `active_noise_cancelling.bit` and `active_noise_cancelling.hwh` files into the same folder. Ensure the
+microphones, speaker and kria board are all wired up and powered on.
 
+**NOTE:** The system can technically be run via Jupyter Notebook without the external microphone circuit, however it **will not work** as intended
+as the PS will read garbage information on the PS. Please ensure this is connected and setup as described earlier.
 
+### During a run:
+Ensure that `PL.reset()` is commented or uncommented depending on if you have a cache storing the output per run.
 
-> Ensure that PL.reset() in PS code is commented / uncommented depending on if a cache exists.
+**To set the output**, seen by the PS, of the PL, set the MUX mode by changing `gpio_mux.write(int num, 0x7)` to:
+| num | Output |
+|---|---|
+| 0 | OFF - No noise cancellation |
+| 1 | ANTI_N - Anti-noise signal outputted by speaker (ANC on) |
+| 2 | WHITE_N - White-noise signal outputted by speaker |
+| 3 | REF_MIC - Reference mic | 
+| 4 | ERR_MIC - Error mic |
 
-> Ensure that the graph is showing, and not weird values...
+**DC Offset**: Let the PYNQ run for a few seconds, and read the first two numbers, these are the `err_average` and the `ref_average` respectively. If one or neither are near zero then
+Adjust:
+- `err_gpio.write(err_offset, 0xFFFFFF)` to change the DC error mic offset
+- `ref_gpio.write(ref_offset, 0xFFFFFF)` to change the DC ref mic offset
+to calibrate the signals the PL receives from the mic to not become influenced by these offsets.
 
-> Show graph when PMOD is disconnected...
+**Upon powering on the notebook**:
+Ensure that both graphs are showing (particularly the orange ref mic signal) and are not receiving aberrant values
+any spikes, unnatural clipping or peaking is odd behaviour:
+- In ambient surrounding:
+![alt text](image/ambient_output.png)
 
-> Show graph when mics are not wired correctly...
+- With a 1 KHz tone:
+![alt text](image/1khz_output.png)
 
-> you can switch the MUX value by editing...
+- In an "airplane noise" setting
+![alt text](image/airplane_noise_output.png)
 
-> you can change the offsets by editing...
+You should expect at least a noticeable (sometimes subtle) reduction in noise (accompanied with a few occasional slight spikes, in which you 
+may hear minimal ringing noise).
 
-> you can see if its working by if its showing a weird reduction.
+**For any weird output**:
+- If the **PMOD board is disconnected** or the **microphones are not connected properly via the circuit** you may see the following output:
+![alt text](image/disconnected_circuit_output.png)
 
+If this appears to be the case, please ensure microphones are connected properly via the circuit and the PMOD is connected to the Kria board.
 
 # Limitations, Incomplete Features, Special Considerations
 
