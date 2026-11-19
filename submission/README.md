@@ -45,10 +45,88 @@ The project is structured as follows.
 
 ## PL
 
-The Vivado build, aswell as the custom constraints file.
+The Vivado build, aswell as the custom constraints file. All PL source lives in `hw/`. The Vivado project itself is **not** included, as it is generated from these files by `create_project.tcl` (see **Building**).
 
-> talk about structure, including each file? also maybe have the .xdc file in a seperate folder aswell as in the vivado hierachy so the markers can easily see it.
+```
+hw/
+├── create_project.tcl        <- rebuilds the whole Vivado project from source
+├── simple_project_bd.pdf     <- printout of the block design
+├── bd/                       <- block design scripts (bd.tcl is the final one used)
+├── ip/                       <- Xilinx IP (.xci) imported by create_project.tcl (multipliers)
+├── modules/                  <- all hand-written VHDL source for the PL
+├── tests/
+│   ├── vivado_tb/            <- Vivado testbenches
+│   └── cocotb/               <- cocotb (Python) testbenches
+├── vivado/                   <- constraints files (.xdc)
+└── build/vivado/             <- GENERATED Vivado project (created by create_project.tcl)
+```
 
+### Constraints
+
+| Signal | PMOD pin | FPGA pin ||
+|---|---|---|---|
+| `pmod_lrcl` (word select, both mics + amp) | 1 | H12 
+| `pmod_ref_dout` (reference mic data) | 2 | B10 
+| `pmod_amp_din` (amplifier data) | 3 | E10 
+| `pmod_err_dout` (error mic data) | 4 | E12 
+| `pmod_bclk` (bit clock, both mics + amp) | 5 | D10 
+| VCC / GND | 11, 12 / 9, 10 | | 
+
+### Block Design
+
+`bd.tcl` rebuilds the block design `simple_project_bd`. The main blocks are:
+
+| Block (instance name) | Type | Purpose |
+|---|---|---|
+| `zynq_ultra_ps_e_0` | Zynq UltraScale+ PS | provides `pl_clk0` (100 MHz), reset and the AXI ports |
+| `i2s_master` | `i2s_master_new.vhd` | generates BCLK / LRCLK, samples both mics in the same frame |
+| `err_adder`, `ref_adder` | `offset.vhd` | add a PS-controlled value to each mic sample to remove its DC offset |
+| `err_gpio`, `ref_gpio` | AXI GPIO (32-bit, outputs) | offset values written from the notebook |
+| `ANC` | `ctrl_wrapper.vhd` | the control system: history buffer, static FIR (Ŝ), FxLMS, adaptive FIR, FSM |
+| `LSFR` | `Leap_Forward_LFSR.vhd` | white-noise generator, used to measure Ŝ |
+| `audio_mux` | `audio_mux.vhd` | selects what the speaker plays |
+| `sel_gpio` | AXI GPIO (3-bit, outputs) | MUX select written from the notebook |
+| `amp_i2s_tx_0` | `amp_i2s_tx.vhd` | I2S transmitter to the MAX98357A |
+| `err_audio_pipeline`, `ref_audio_pipeline` | `audio_pipeline_new.vhd` | FIFO + AXI-Stream packets of mic samples |
+| `err_axi_dma`, `ref_axi_dma` | AXI DMA (S2MM) | stream both mics to PS memory for graphing |
+| `smartconnect`, `reset` | AXI SmartConnect, Processor System Reset | AXI-Lite routing to the DMAs / GPIOs, synchronised reset |
+
+MUX select values (from `constants.vhd`):
+
+| `sel_gpio` value | Speaker plays |
+|---|---|
+| 0 (`NO_NOISE`) | nothing |
+| 1 (`ANTI_N`) | anti-noise from the control system |
+| 2 (`WHITE_N`) | white noise from the LFSR |
+| 3 (`REF_MIC`) | reference mic  |
+| 4 (`ERR_MIC`) | error mic  |
+
+### Modules
+
+| File | Description |
+|---|---|
+| `constants.vhd` | shared package: sample widths, **M = 1024** (Ŝ taps), **L = 32** (adaptive taps), `M_BITS` / `L_BITS`, and the MUX select codes |
+| `i2s_master_new.vhd` | I2S master for both SPH0645 mics. BCLK = 3.125 MHz, 64 BCLK per frame (fs = 48 828 Hz). Captures the reference and error samples together and pulses `ref_w_stb` / `err_w_stb` once per sample |
+| `amp_i2s_tx.vhd` | I2S transmitter for the MAX98357A. Sends the 24-bit sample MSB-first, one BCLK after each LRCLK edge |
+| `offset.vhd` | adds the 32-bit offset from `err_gpio` / `ref_gpio` to the mic sample (DC offset removal) |
+| `audio_mux.vhd` | 5-input speaker source selector, controlled by `sel_gpio` |
+| `Leap_Forward_LFSR.vhd` | 31-bit leap-forward LFSR (x³¹ + x³ + 1), 16 new bits per sample. Produces white noise for Ŝ measurement |
+| `audio_pipeline_new.vhd`, `fifo.vhd` | buffer mic samples and send them as AXI-Stream packets (256 words) to the DMAs |
+| `ctrl_wrapper.vhd` | top level of the control system (block `ANC`), connects all modules below |
+| `ctrl_fsm.vhd` | sequences one sample: store x[n] and e[n] → run static FIR → shift x′ into LMS → update weights → latch y[n] |
+| `extract_sample_18.vhd` | takes the 18 valid bits out of a 32-bit I2S word |
+| `general_reg.vhd` | generic enabled register (error sample, output y[n]) |
+| `x_history_buffer.vhd` | circular buffer of the last M = 1024 reference samples. `rd_ptr = k` returns x[n−k] one clock later |
+| `static_fir_filter.vhd` | secondary-path estimate: x′[n] = Σ Ŝ[k]·x[n−k] over 1024 taps. The measured Ŝ is stored in ROM ×2¹⁸. One multiply-accumulate per clock on `mult_gen_0` (3-stage pipeline), ~1028 clocks per sample, output shifted right by 18 |
+| `lms.vhd` | FxLMS weight update for the 32 weights: w ← w − (e·x′ >> 10). Computes all 32 updates in parallel (this is where most DSP usage comes from) |
+| `adaptive_fir_filter.vhd` | anti-noise y[n] = Σ w[i]·x[n−i] over L = 32 taps, using `mult_gen_1` (18 × 26) |
+
+### IP 
+
+| IP | Settings | Used by |
+|---|---|---|
+| `mult_gen_0` | Multiplier 12.0, signed 18 × 18, Use Mults (DSP48), 3 pipeline stages | `static_fir_filter` |
+| `mult_gen_1` | Multiplier 12.0, signed 18 × 26, Use Mults (DSP48), 3 pipeline stages | `adaptive_fir_filter` |
 
 ## PS
 
@@ -64,7 +142,20 @@ The Vivado build, aswell as the custom constraints file.
 
 # Building
 
-> Show how to export via Export Hardware...
+
+### Requirements
+- **Vivado 2024.1**
+
+### 1. Open or create the Vivado project
+
+**Recreate it from source** In Vivado, either:
+- **Tools → Run Tcl Script** and select `hw/create_project.tcl`
+
+The script:
+1. creates the project `anc` in `hw/build/vivado/`
+2. adds every `.vhd` in `hw/modules/`, the constraints in `hw/vivado/`, and the testbenches in `hw/tests/vivado_tb/`
+3. imports and generates the multiplier IP from `hw/ip/` (`mult_gen_0`, `mult_gen_1`)
+4. rebuilds the block design from `hw/bd/bd.tcl`, creates its HDL wrapper and sets `simple_project_bd_wrapper` as top
 
 # Testing and Verifying
 
