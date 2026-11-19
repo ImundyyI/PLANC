@@ -59,8 +59,20 @@ The following diagram outlines how to connect each port on the KV260's PMOD port
 
 The project is structured as follows.
 
-> INSERT IMAGE / ASCII OF FILE TREE HERE.
-
+```
+submission
+├── README.md                 <- project overview, build guide and test results
+├── diagrams                  <- PDF block diagrams and external circuit schematic
+├── hw
+│   ├── bd                    <- block design script (bd.tcl)
+│   ├── constraints           <- pin and timing constraints (.xdc)
+│   ├── create_project.tcl    <- rebuilds the whole Vivado project from source
+│   ├── ip                    <- Xilinx IP (.xci) imported by create_project.tcl (multipliers)
+│   └── modules               <- all hand-written VHDL source for the PL
+├── images                    <- figures used in the README (test outputs, build guide, diagrams)
+├── sw                        <- bitstream (.bit), hardware handoff (.hwh) and PS notebook (.ipynb)
+└── vivado_archive            <- archived full Vivado project (.xpr.zip)
+```
 
 
 ## PL

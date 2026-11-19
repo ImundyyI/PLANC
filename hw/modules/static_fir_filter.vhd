@@ -201,16 +201,22 @@ architecture Behavioral of static_fir_filter is
                                     153, 101, -57, -124, -96, -12, 110, 120
                                     );
 begin
+    -- setting up the multiplier ip block 
     rd_ptr <= std_logic_vector(to_unsigned(k, M_BITS));
     a_in <= ref_in;
     mult: mult_gen_0 port map (CLK => clk, 
                            A => a_in, 
                            B => b_in, 
                            P => prod);
+                           
+-- multiplication process block accounting for the pipelining of the ip block
 process(clk)
         variable x   : signed(17 downto 0);
         variable sum : signed(47 downto 0);
     begin
+        -- On an en signal we start assert that we are busy
+        -- and keep on summing on k and do the calculation to do the convolution 
+        -- on the input signal and the S_HAT we have stored 
         if rising_edge(clk) then
             done <= '0';
             if en = '1' then
@@ -225,8 +231,11 @@ process(clk)
                 end if;
             end if;
             
+            
             b_in <= std_logic_vector(to_signed(SHAT_ROM(k), 18));
             
+            -- keep changing state with blocking assignment to account for the pipeline
+            -- as it is 3 stage pipeline we have to wait until those stages have been passed
             busy1 <= busy;
             busy2 <= busy1;
             busy3 <= busy2;
@@ -236,6 +245,7 @@ process(clk)
                 sum := acc + signed(prod);
                 acc <= sum;
                 -- busy4 = 1 but busy3 = 0 means this is the last product
+                -- and we can assert done for the FSM to do the control 
                 if busy3 = '0' then
                     filtered <= std_logic_vector(sum(SHAT_SHIFT+17 downto SHAT_SHIFT));
                     done     <= '1';
