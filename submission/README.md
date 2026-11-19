@@ -242,20 +242,20 @@ to calibrate the signals the PL receives from the mic to not become influenced b
 Ensure that both graphs are showing (particularly the orange ref mic signal) and are not receiving aberrant values
 any spikes, unnatural clipping or peaking is odd behaviour:
 - In ambient surrounding:
-![alt text](image/ambient_output.png)
+![alt text](images/ambient_output.png)
 
 - With a 1 KHz tone:
-![alt text](image/1khz_output.png)
+![alt text](images/1khz_output.png)
 
 - In an "airplane noise" setting
-![alt text](image/airplane_noise_output.png)
+![alt text](images/airplane_noise_output.png)
 
 You should expect at least a noticeable (sometimes subtle) reduction in noise (accompanied with a few occasional slight spikes, in which you 
 may hear minimal ringing noise).
 
 **For any weird output**:
 - If the **PMOD board is disconnected** or the **microphones are not connected properly via the circuit** you may see the following output:
-![alt text](image/disconnected_circuit_output.png)
+![alt text](images/disconnected_circuit_output.png)
 
 If this appears to be the case, please ensure microphones are connected properly via the circuit and the PMOD is connected to the Kria board.
 
