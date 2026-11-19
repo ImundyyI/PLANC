@@ -242,12 +242,15 @@ to calibrate the signals the PL receives from the mic to not become influenced b
 Ensure that both graphs are showing (particularly the orange ref mic signal) and are not receiving aberrant values
 any spikes, unnatural clipping or peaking is odd behaviour:
 - In ambient surrounding:
+
 ![alt text](images/ambient_output.png)
 
-- With a 1 KHz tone:
+- With a 1 KHz tone: 
+
 ![alt text](images/1kz_output.png)
 
-- In an "airplane noise" setting
+- In an "airplane noise" setting:
+
 ![alt text](images/airplane_noise_output.png)
 
 You should expect at least a noticeable (sometimes subtle) reduction in noise (accompanied with a few occasional slight spikes, in which you 
