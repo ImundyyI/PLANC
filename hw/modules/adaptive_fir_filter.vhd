@@ -127,15 +127,7 @@ begin
                     sum <= sum + resize(signed(mult_sig), 49); -- Sum should accumulate for 3 to 35 (the first 3 cycles are a delay)
                 end if;
 
-                if tap_count = NUM_TAPS + MULT_DELAY then
---                    if (sum >= MAX_VAL) then
---                        y_sig <= std_logic_vector(MAX_VAL(31 downto 0));  -- If the sum is larger than 32 bit max we will just peak it
---                    elsif (sum <= MIN_VAL) then                           -- yes this will peak the speakers but we shouldn't see this happen too often
---                        y_sig <= std_logic_vector(MIN_VAL(31 downto 0));
---                    else
---                        y_sig <= std_logic_vector(sum(31 downto 0));
---                    end if;
-                    
+                if tap_count = NUM_TAPS + MULT_DELAY then                    
                     y_sig <= std_logic_vector(resize(shift_right(sum, 21), 32));
                     running <=  '0';
                     done <= '1';
