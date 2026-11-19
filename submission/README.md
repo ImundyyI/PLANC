@@ -173,8 +173,14 @@ An archive has been placed in the .zip root if you wish to use the vivado projec
 
 ### 2. Building from Source
 
-**Recreate it from source** In Vivado, either:
-- **Tools → Run Tcl Script** and select `hw/create_project.tcl`.
+**Recreate it from source** In Vivado:
+1. Navigate to the top toolbar.
+
+![alt text](images/build_guide_1.png)
+
+2. **Tools → Run Tcl Script** and select `hw/create_project.tcl`.
+
+![alt text](images/build_guide_2.png)
 
 The script:
 1. creates the project `anc` in `hw/build/vivado/`.
@@ -186,7 +192,7 @@ The script:
 
 >Make sure that `create_project.tcl` is in the same directory as `bd/`
 
-# Testing and Verifying
+# Running, Testing, Verifying
 
 > It should be noted that the system can still be technically run via Jupyter Notebook without the external circuit, however it **will not work** and read garbage values on the PS.
 
