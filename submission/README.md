@@ -57,20 +57,20 @@ hw/
 ├── tests/
 │   ├── vivado_tb/            <- Vivado testbenches
 │   └── cocotb/               <- cocotb (Python) testbenches
-├── vivado/                   <- constraints files (.xdc)
+├── constraint/               <- constraints files (.xdc)
 └── build/vivado/             <- GENERATED Vivado project (created by create_project.tcl)
 ```
 
 ### Constraints
 
-| Signal | PMOD pin | FPGA pin ||
-|---|---|---|---|
-| `pmod_lrcl` (word select, both mics + amp) | 1 | H12 
-| `pmod_ref_dout` (reference mic data) | 2 | B10 
-| `pmod_amp_din` (amplifier data) | 3 | E10 
-| `pmod_err_dout` (error mic data) | 4 | E12 
-| `pmod_bclk` (bit clock, both mics + amp) | 5 | D10 
-| VCC / GND | 11, 12 / 9, 10 | | 
+| Signal | PMOD pin | FPGA pin |
+|---|---|---|
+| `pmod_lrcl` (word select, both mics + amp) | 1 | H12 |
+| `pmod_ref_dout` (reference mic data) | 2 | B10 |
+| `pmod_amp_din` (amplifier data) | 3 | E10 |
+| `pmod_err_dout` (error mic data) | 4 | E12 |
+| `pmod_bclk` (bit clock, both mics + amp) | 5 | D10 |
+| VCC / GND | 11, 12 / 9, 10 | |
 
 ### Block Design
 
