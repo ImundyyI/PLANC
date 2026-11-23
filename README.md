@@ -1,23 +1,11 @@
-# COMP3601 Assignment
+# PLANC
+**Programmable Logic Active Noise Cancelling** 
+
 ## Preable
 
-Use Vivado 2024.1.
-
-The project structure is depicted below.
-
-├── bd
-│   └── bd.tcl
-├── create_project.tcl
-├── modules
-│   ├── demo.vhd
-│   └── simple.vhd
-├── tests
-│   ├── cocotb
-│   └── vivado_tb
-└── vivado
-    └── kria-constraints-1.xdc
-
-
+A 1D MVP of an active noise cancelling system implemented **entirely** in PL on the AMD Kria KV260. This was for COMP3601 Design Project A, a group project course where we were tasked with building an audio-related embedded system on the AMD Kria KV260, using at-least an SPH0645LM4H-B. For a full overview on the project, see [Link Text](submission/README.md).**
+> For compatibility, use Vivado 2024.1.
+> `graph.pynb` is a Jupyter Notebook that can be used to control the PL via Python.
 
 ## First Time Setup
 1. clone repo. Ensure the repo is not nestedly deeply inside a directory hierarchy, **Vivado on windows complains if your path is too long**. Chuck it in like `C:\Desktop` or sum idk.
